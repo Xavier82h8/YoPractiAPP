@@ -32,7 +32,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setGoogleIsLoading] = useState(true); // Start as true to handle redirect
+  const [isGoogleLoading, setGoogleIsLoading] = useState(true);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,6 +49,8 @@ export default function LoginPage() {
         if (result) {
           toast({ title: "Success", description: "Logged in successfully with Google." });
           router.push("/profile");
+        } else {
+            setGoogleIsLoading(false);
         }
       } catch (error: any) {
         console.error("Google Login Redirect Error:", error);
@@ -57,7 +59,6 @@ export default function LoginPage() {
           title: "Google Login Failed",
           description: error.message,
         });
-      } finally {
         setGoogleIsLoading(false);
       }
     };
@@ -72,8 +73,6 @@ export default function LoginPage() {
       router.push("/profile");
     } catch (error: any) {
       console.error("Login Error:", error);
-      console.error("Error Code:", error.code);
-      console.error("Error Message:", error.message);
       toast({
         variant: "destructive",
         title: "Login Failed",
@@ -89,11 +88,8 @@ export default function LoginPage() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithRedirect(auth, provider);
-      // The user will be redirected, so no need to set loading to false here.
     } catch (error: any) {
        console.error("Google Login Error:", error);
-       console.error("Error Code:", error.code);
-       console.error("Error Message:", error.message);
       toast({
         variant: "destructive",
         title: "Google Login Failed",

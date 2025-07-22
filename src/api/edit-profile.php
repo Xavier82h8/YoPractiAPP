@@ -31,6 +31,10 @@ $allowedFields = [
     'fullName' => 'nombre_usuario', // Para alumnos
     'companyName' => 'nombre_empresa', // Para empresas
     'skills' => 'habilidades'
+    // Nota: Los campos como 'website', 'logo', 'address' etc. no se incluyen aquí
+    // porque no existen en la tabla 'registro_usuarios'.
+    // Cuando agregues esas columnas a tu BD, simplemente añádelas a este array.
+    // Ejemplo: 'website' => 'website_columna',
 ];
 
 $fieldsToUpdate = [];

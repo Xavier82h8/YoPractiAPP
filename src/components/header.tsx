@@ -4,6 +4,7 @@ import { Logo } from './logo';
 import { ThemeToggle } from './theme-toggle';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Menu } from 'lucide-react';
+import { AuthNav } from './auth-nav';
 
 export function Header() {
   return (
@@ -40,17 +41,12 @@ export function Header() {
             <Button variant="ghost" asChild>
               <Link href="/#featured-internships">Internships</Link>
             </Button>
-            <Button variant="ghost" asChild>
-              <Link href="/profile">Profile</Link>
-            </Button>
+             <AuthNav />
           </nav>
           <div className="flex items-center gap-2">
-            <Button asChild>
-              <Link href="/login">Login</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/register">Register</Link>
-            </Button>
+            <div className="md:hidden">
+              <AuthNav />
+            </div>
             <ThemeToggle />
           </div>
         </div>

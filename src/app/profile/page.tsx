@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +28,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const initialProfile = useRef<UserProfile | null>(null);
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
@@ -36,22 +37,19 @@ export default function ProfilePage() {
         return;
     }
 
-    const email = localStorage.getItem('userEmail') || '';
-    const userType = localStorage.getItem('userType') || 'alumno';
-    const fullName = localStorage.getItem('userFullName') || "Usuario";
-    
-    // Aquí podrías hacer un fetch a tu API para obtener los datos más recientes.
+    // Aquí deberías hacer un fetch a tu API para obtener los datos más recientes.
     // Por ahora, usamos los de localStorage y valores por defecto.
-    setUserProfile({
+    const profile: UserProfile = {
         id: userId,
-        email: email,
-        userType: userType,
-        fullName: fullName,
-        phone: "", // Deberías obtener esto de tu API
-        skills: "", // Deberías obtener esto de tu API
-        experience: "", // Deberías obtener esto de tu API
-    });
-
+        email: localStorage.getItem('userEmail') || '',
+        userType: localStorage.getItem('userType') || 'alumno',
+        fullName: localStorage.getItem('userFullName') || "Usuario",
+        phone: localStorage.getItem('userPhone') || "", // Cargar desde localStorage
+        skills: localStorage.getItem('userSkills') || "", // Cargar desde localStorage
+        experience: localStorage.getItem('userExperience') || "", // Cargar desde localStorage
+    };
+    setUserProfile(profile);
+    initialProfile.current = profile; // Guardar el estado inicial
   }, [router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -62,25 +60,41 @@ export default function ProfilePage() {
 
   const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userProfile) return;
+    if (!userProfile || !initialProfile.current) return;
     setIsLoading(true);
 
-    try {
-        const profileData = {
-            id: userProfile.id,
-            fullName: userProfile.fullName,
-            email: userProfile.email,
-            phone: userProfile.phone,
-            skills: userProfile.skills,
-            experience: userProfile.experience,
-        };
+    // 1. Comparar y encontrar solo los campos modificados
+    const changedData: Partial<UserProfile> = {};
+    Object.keys(userProfile).forEach(key => {
+      const aKey = key as keyof UserProfile;
+      if (userProfile[aKey] !== initialProfile.current![aKey]) {
+        changedData[aKey] = userProfile[aKey];
+      }
+    });
 
+    // Si no hay cambios, no hacer nada
+    if (Object.keys(changedData).length === 0) {
+      toast({
+        title: "Sin cambios",
+        description: "No has modificado ningún dato.",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // 2. Construir el cuerpo de la petición solo con los datos cambiados + id
+    const requestBody = {
+        id: userProfile.id,
+        ...changedData
+    };
+
+    try {
         const response = await fetch('https://yopracticando.com/api/editar_usuario.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(profileData),
+            body: JSON.stringify(requestBody),
         });
 
         const result = await response.json();
@@ -90,9 +104,13 @@ export default function ProfilePage() {
                 title: "¡Éxito!",
                 description: "Tu perfil ha sido actualizado correctamente.",
             });
-            // Actualizar datos en localStorage si cambiaron
-            localStorage.setItem('userEmail', userProfile.email);
-            localStorage.setItem('userFullName', userProfile.fullName);
+            // 3. Actualizar el estado inicial y localStorage con los nuevos datos
+            const updatedProfile = { ...userProfile };
+            initialProfile.current = updatedProfile;
+            Object.keys(updatedProfile).forEach(key => {
+              const aKey = key as keyof UserProfile;
+              localStorage.setItem(`user${aKey.charAt(0).toUpperCase() + aKey.slice(1)}`, updatedProfile[aKey]);
+            });
             window.dispatchEvent(new Event("storage")); // Notificar a otros componentes
         } else {
             throw new Error(result.message || "Error al actualizar el perfil.");

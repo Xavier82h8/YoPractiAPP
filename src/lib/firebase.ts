@@ -3,7 +3,6 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
-// IMPORTANT: Replace with your actual Firebase config
 const firebaseConfig = {
   "projectId": "yopracticando-36seb",
   "appId": "1:634933837473:web:0b76c4502219798642bae0",
@@ -14,7 +13,7 @@ const firebaseConfig = {
   "messagingSenderId": "634933837473"
 };
 
-// Initialize Firebase
+// Initialize Firebase for SSR
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 

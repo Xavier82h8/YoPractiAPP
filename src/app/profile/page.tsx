@@ -67,7 +67,7 @@ export default function ProfilePage() {
     setIsLoading(true);
 
     try {
-        const response = await fetch('https://yopracticando.com/api/edit-profile.php', {
+        const response = await fetch('https://yopracticando.com/api/editar_usuario.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

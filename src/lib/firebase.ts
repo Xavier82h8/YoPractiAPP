@@ -9,11 +9,10 @@ const firebaseConfig = {
   "storageBucket": "yopracticando-36seb.firebasestorage.app",
   "apiKey": "AIzaSyAGPUVrINy_j1g-_Um1xZ21GODtfe9NtkY",
   "authDomain": "yopracticando-36seb.firebaseapp.com",
-  "measurementId": "",
   "messagingSenderId": "634933837473"
 };
 
-// Initialize Firebase for SSR
+// Initialize Firebase for SSR safely
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 

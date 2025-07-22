@@ -74,7 +74,8 @@ export default function RegisterPage() {
         title: "Error de Servidor",
         description: error.message,
       });
-      setIsGoogleLoading(false);
+    } finally {
+        setIsGoogleLoading(false);
     }
   };
   
@@ -97,7 +98,7 @@ export default function RegisterPage() {
         });
         setIsGoogleLoading(false);
       });
-  }, [router, toast]);
+  }, []);
   
 
   const form = useForm<z.infer<typeof formSchema>>({

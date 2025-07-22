@@ -68,7 +68,8 @@ export default function LoginPage() {
         title: "Error de Servidor",
         description: error.message,
       });
-      setIsGoogleLoading(false);
+    } finally {
+        setIsGoogleLoading(false);
     }
   };
 
@@ -92,7 +93,7 @@ export default function LoginPage() {
         });
         setIsGoogleLoading(false);
       });
-  }, [router, toast]);
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -134,6 +135,11 @@ export default function LoginPage() {
         if (result.token) {
           localStorage.setItem('userToken', result.token);
         }
+        
+        // Es importante obtener y guardar el nombre completo si la API lo devuelve.
+        // Asumiendo que la API devuelve 'nombre_usuario' o 'nombre_empresa'
+        const fullName = result.usuario.nombre_usuario || result.usuario.nombre_empresa || 'Usuario';
+        localStorage.setItem('userFullName', fullName);
         
         window.dispatchEvent(new Event("storage"));
         

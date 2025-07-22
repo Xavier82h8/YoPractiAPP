@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
-import { User, Mail, Briefcase, Code, Shield, Phone, Loader2 } from "lucide-react";
+import { User, Mail, Code, Shield, Phone, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { UserProfile } from "@/app/profile/page";
 
@@ -33,15 +33,9 @@ export default function AlumnoProfile({ initialProfileData }: AlumnoProfileProps
     setIsLoading(true);
 
     const changedData: Partial<UserProfile> = {};
-    Object.keys(userProfile).forEach(key => {
-      const aKey = key as keyof UserProfile;
-      if (userProfile[aKey] !== initialProfile.current![aKey]) {
-        // Mapear fullName a username para el backend
-        if (aKey === 'fullName') {
-            changedData['username' as keyof UserProfile] = userProfile[aKey];
-        } else {
-            changedData[aKey] = userProfile[aKey];
-        }
+    (Object.keys(userProfile) as Array<keyof UserProfile>).forEach(key => {
+      if (userProfile[key] !== initialProfile.current[key]) {
+        changedData[key] = userProfile[key];
       }
     });
 
@@ -52,7 +46,7 @@ export default function AlumnoProfile({ initialProfileData }: AlumnoProfileProps
     }
 
     const requestBody = { id: userProfile.id, ...changedData };
-
+    
     try {
         const response = await fetch('https://yopracticando.com/api/editar_usuario.php', {
             method: 'POST',
@@ -66,10 +60,11 @@ export default function AlumnoProfile({ initialProfileData }: AlumnoProfileProps
             toast({ title: "¡Éxito!", description: "Tu perfil ha sido actualizado correctamente." });
             const updatedProfile = { ...userProfile };
             initialProfile.current = updatedProfile;
-            Object.keys(requestBody).forEach(key => {
+            
+            // Actualizar localStorage con los nuevos datos
+            Object.keys(changedData).forEach(key => {
               const aKey = key as keyof UserProfile;
-              const localKey = aKey === 'username' ? 'fullName' : aKey;
-              localStorage.setItem(`user${localKey.charAt(0).toUpperCase() + localKey.slice(1)}`, String(requestBody[aKey]));
+              localStorage.setItem(`user${aKey.charAt(0).toUpperCase() + aKey.slice(1)}`, String(changedData[aKey]));
             });
             window.dispatchEvent(new Event("storage"));
         } else {
@@ -125,18 +120,6 @@ export default function AlumnoProfile({ initialProfileData }: AlumnoProfileProps
                 value={userProfile.skills}
                 onChange={handleInputChange}
                 className="min-h-[100px]"
-                disabled={isLoading}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="experience" className="flex items-center gap-2"><Briefcase className="w-4 h-4"/>Experiencia</Label>
-              <Textarea
-                id="experience"
-                placeholder="Describe tus roles y proyectos pasados..."
-                className="min-h-[150px]"
-                value={userProfile.experience}
-                onChange={handleInputChange}
                 disabled={isLoading}
               />
             </div>

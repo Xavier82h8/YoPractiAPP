@@ -13,7 +13,7 @@ import Link from "next/link";
 import { User, Building, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { auth } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup, sendEmailVerification } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
@@ -56,12 +56,14 @@ export default function RegisterPage() {
       await updateProfile(userCredential.user, {
         displayName: values.fullName,
       });
+
+      await sendEmailVerification(userCredential.user);
       
       // Here you would typically also save the userType to your database (e.g., Firestore)
       // associated with the user's UID (userCredential.user.uid)
 
-      toast({ title: "Success", description: "Account created successfully." });
-      router.push("/profile");
+      toast({ title: "Success", description: "Account created. Please check your email to verify your account." });
+      router.push("/verify-account");
 
     } catch (error: any) {
       console.error(error);
@@ -79,7 +81,13 @@ export default function RegisterPage() {
     setGoogleIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // For Google sign-in, we can consider the email as verified.
+      // You might want to check if this is a new user or existing user
+      // and handle them accordingly, perhaps by checking your database.
+
       toast({ title: "Success", description: "Signed up successfully with Google." });
       router.push("/profile");
     } catch (error: any) {

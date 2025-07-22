@@ -42,58 +42,48 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(true);
 
-  const handleGoogleUserInBackend = async (googleUser: FirebaseUser) => {
+  const handleGoogleAuth = async (googleUser: FirebaseUser) => {
     try {
-        const requestData = {
-            email: googleUser.email,
-            password: '', // Password is not needed for Google Auth
-            phonePrefix: '+51',
-            phone: '', // Phone is not available from Google Auth
-            tipoUsuario: 'alumno', // Default type for Google sign-up
-            username: googleUser.displayName,
-            empresa: '',
-            googleAuth: 'true', // Flag to indicate Google Auth
-            googleId: googleUser.uid,
-        };
+      const response = await fetch('https://yopracticando.com/api/google-auth.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: googleUser.email,
+          fullName: googleUser.displayName,
+          googleId: googleUser.uid,
+        }),
+      });
 
-        const response = await fetch('https://yopracticando.com/api/enviar_verificacion.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestData),
-        });
+      const result = await response.json();
 
-        const result = await response.json();
-
-        if (result.success && result.usuario) {
-            localStorage.setItem('userId', String(result.usuario.id));
-            localStorage.setItem('userEmail', googleUser.email || '');
-            localStorage.setItem('userFullName', googleUser.displayName || 'Usuario');
-            localStorage.setItem('userType', result.usuario.tipo_usuario);
-            if(result.token) localStorage.setItem('userToken', result.token);
-            
-            window.dispatchEvent(new Event("storage"));
-            toast({ title: "¡Registro Exitoso!", description: "Tu cuenta ha sido creada con Google." });
-            router.push("/profile");
-        } else {
-            throw new Error(result.message || 'Error al registrar el usuario de Google en el backend.');
-        }
+      if (result.success && result.usuario) {
+        localStorage.setItem('userId', String(result.usuario.id));
+        localStorage.setItem('userEmail', googleUser.email || '');
+        localStorage.setItem('userFullName', googleUser.displayName || 'Usuario');
+        localStorage.setItem('userType', result.usuario.tipo_usuario);
+        window.dispatchEvent(new Event("storage"));
+        toast({ title: "¡Éxito!", description: "Registro con Google exitoso." });
+        router.push("/profile");
+      } else {
+        throw new Error(result.message || 'Error al procesar el registro con Google.');
+      }
     } catch (error: any) {
-        console.error("Error creating Google user in backend:", error);
-        toast({
-            variant: "destructive",
-            title: "Error de Servidor",
-            description: error.message,
-        });
+      console.error("Error en handleGoogleAuth:", error);
+      toast({
+        variant: "destructive",
+        title: "Error de Servidor",
+        description: error.message,
+      });
+      setIsGoogleLoading(false);
     }
   };
+  
 
   useEffect(() => {
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
-          const user = result.user;
-          console.log('User registered with Google:', user);
-          handleGoogleUserInBackend(user);
+          handleGoogleAuth(result.user);
         } else {
             setIsGoogleLoading(false);
         }

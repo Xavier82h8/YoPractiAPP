@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { getRedirectResult, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import { getRedirectResult, GoogleAuthProvider, signInWithRedirect, User as FirebaseUser } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -36,18 +36,51 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(true);
 
+  const handleGoogleAuth = async (googleUser: FirebaseUser) => {
+    try {
+      const response = await fetch('https://yopracticando.com/api/google-auth.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: googleUser.email,
+          fullName: googleUser.displayName,
+          googleId: googleUser.uid,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.usuario) {
+        localStorage.setItem('userId', String(result.usuario.id));
+        localStorage.setItem('userEmail', googleUser.email || '');
+        localStorage.setItem('userFullName', googleUser.displayName || 'Usuario');
+        localStorage.setItem('userType', result.usuario.tipo_usuario);
+        window.dispatchEvent(new Event("storage"));
+        toast({ title: "¡Éxito!", description: "Inicio de sesión con Google exitoso." });
+        router.push("/profile");
+      } else {
+        throw new Error(result.message || 'Error al procesar el inicio de sesión con Google.');
+      }
+    } catch (error: any) {
+      console.error("Error en handleGoogleAuth:", error);
+      toast({
+        variant: "destructive",
+        title: "Error de Servidor",
+        description: error.message,
+      });
+      setIsGoogleLoading(false);
+    }
+  };
+
+
   useEffect(() => {
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
-          const user = result.user;
-          console.log('User logged in with Google:', user);
-          localStorage.setItem('userId', user.uid);
-          localStorage.setItem('userEmail', user.email || '');
-          localStorage.setItem('userType', 'alumno'); // Default or get from your API
-          window.dispatchEvent(new Event("storage"));
-          toast({ title: "¡Éxito!", description: "Inicio de sesión con Google exitoso." });
-          router.push("/profile");
+          // Usuario ha iniciado sesión o se ha registrado con Google.
+          handleGoogleAuth(result.user);
+        } else {
+          setIsGoogleLoading(false);
         }
       })
       .catch((error) => {
@@ -57,8 +90,6 @@ export default function LoginPage() {
           title: "Error de Google",
           description: error.message,
         });
-      })
-      .finally(() => {
         setIsGoogleLoading(false);
       });
   }, [router, toast]);

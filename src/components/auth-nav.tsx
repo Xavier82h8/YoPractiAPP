@@ -12,6 +12,7 @@ import { LayoutDashboard, LogOut } from 'lucide-react';
 interface UserData {
   id: string;
   email: string;
+  fullName: string;
   type: string;
 }
 
@@ -21,27 +22,23 @@ export function AuthNav() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check for user data in localStorage on component mount
-    const userId = localStorage.getItem('userId');
-    const userEmail = localStorage.getItem('userEmail');
-    const userType = localStorage.getItem('userType');
-
-    if (userId && userEmail && userType) {
-      setUser({ id: userId, email: userEmail, type: userType });
-    }
-
-    // Listen for storage changes to sync across tabs
     const handleStorageChange = () => {
         const userId = localStorage.getItem('userId');
         const userEmail = localStorage.getItem('userEmail');
         const userType = localStorage.getItem('userType');
-        if (userId && userEmail && userType) {
-          setUser({ id: userId, email: userEmail, type: userType });
+        const userFullName = localStorage.getItem('userFullName');
+
+        if (userId && userEmail && userType && userFullName) {
+          setUser({ id: userId, email: userEmail, type: userType, fullName: userFullName });
         } else {
           setUser(null);
         }
     };
+    
+    // Initial check
+    handleStorageChange();
 
+    // Listen for storage changes to sync across tabs
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
@@ -55,6 +52,7 @@ export function AuthNav() {
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userType');
     localStorage.removeItem('userToken');
+    localStorage.removeItem('userFullName');
     
     // Update state and notify user
     setUser(null);
@@ -76,15 +74,14 @@ export function AuthNav() {
     );
   }
 
-  const userInitial = user.email ? user.email.charAt(0).toUpperCase() : '?';
+  const userInitial = user.fullName ? user.fullName.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase();
 
   return (
      <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
            <Avatar className="h-9 w-9">
-              {/* You can add a user avatar if you store it */}
-              <AvatarImage src={''} alt={user.email} />
+              <AvatarImage src={`https://ui-avatars.com/api/?name=${user.fullName.replace(' ','+')}&background=random`} alt={user.fullName} />
               <AvatarFallback>{userInitial}</AvatarFallback>
             </Avatar>
         </Button>
@@ -92,7 +89,7 @@ export function AuthNav() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Usuario</p>
+            <p className="text-sm font-medium leading-none">{user.fullName}</p>
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
             </p>

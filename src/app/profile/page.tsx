@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { User, Mail, Briefcase, Code, Shield, Phone, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 interface UserProfile {
   id: string;
@@ -24,29 +25,35 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    // Cargar datos del usuario desde localStorage
     const userId = localStorage.getItem('userId');
+    if (!userId) {
+        router.push('/login');
+        return;
+    }
+
+    // Cargar datos del usuario desde localStorage
     const userEmail = localStorage.getItem('userEmail');
     const userType = localStorage.getItem('userType');
+    const userFullName = localStorage.getItem('userFullName');
     
-    // Aquí deberías hacer un fetch a tu API para obtener los datos completos del perfil
-    // Por ahora, usaremos los datos de localStorage y valores por defecto
-    if (userId && userEmail && userType) {
-        setUserProfile({
-            id: userId,
-            email: userEmail,
-            userType: userType,
-            fullName: "Usuario", // Deberías obtener esto de tu API
-            phone: "", // Deberías obtener esto de tu API
-            skills: "", // Deberías obtener esto de tu API
-            experience: "", // Deberías obtener esto de tu API
-        });
-    }
-  }, []);
+    // Aquí podrías hacer un fetch a tu API para obtener los datos más recientes.
+    // Por ahora, usamos los de localStorage y valores por defecto.
+    setUserProfile({
+        id: userId,
+        email: userEmail || '',
+        userType: userType || 'alumno',
+        fullName: userFullName || "Usuario",
+        phone: "", // Deberías obtener esto de tu API
+        skills: "", // Deberías obtener esto de tu API
+        experience: "", // Deberías obtener esto de tu API
+    });
+
+  }, [router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (!userProfile) return;
@@ -82,8 +89,10 @@ export default function ProfilePage() {
                 title: "¡Éxito!",
                 description: "Tu perfil ha sido actualizado correctamente.",
             });
-            // Actualizar el correo en localStorage si cambió
+            // Actualizar datos en localStorage si cambiaron
             localStorage.setItem('userEmail', userProfile.email);
+            localStorage.setItem('userFullName', userProfile.fullName);
+            window.dispatchEvent(new Event("storage")); // Notificar a otros componentes
         } else {
             throw new Error(result.message || "Error al actualizar el perfil.");
         }
@@ -111,7 +120,7 @@ export default function ProfilePage() {
       <Card className="max-w-4xl mx-auto shadow-lg">
         <CardHeader className="flex flex-col items-center text-center space-y-4 p-6 bg-secondary/30">
           <Avatar className="h-24 w-24 border-4 border-background shadow-md">
-            <AvatarImage src="https://placehold.co/100x100.png" alt={userProfile.fullName} data-ai-hint="profile picture" />
+            <AvatarImage src={`https://ui-avatars.com/api/?name=${userProfile.fullName.replace(' ','+')}&background=random`} alt={userProfile.fullName} />
             <AvatarFallback>{userProfile.fullName.charAt(0)}</AvatarFallback>
           </Avatar>
           <div>

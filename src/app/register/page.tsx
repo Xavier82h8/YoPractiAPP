@@ -38,7 +38,7 @@ export default function RegisterPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setGoogleIsLoading] = useState(false);
+  const [isGoogleLoading, setGoogleIsLoading] = useState(true); // Start as true to handle redirect
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -50,7 +50,7 @@ export default function RegisterPage() {
   });
 
    useEffect(() => {
-    const checkRedirect = async () => {
+    const handleRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
         if (result) {
@@ -64,9 +64,11 @@ export default function RegisterPage() {
           title: "Google Sign-up Failed",
           description: error.message,
         });
+      } finally {
+        setGoogleIsLoading(false);
       }
     };
-    checkRedirect();
+    handleRedirectResult();
   }, [router, toast]);
 
 
@@ -102,6 +104,7 @@ export default function RegisterPage() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithRedirect(auth, provider);
+      // The user will be redirected, so no need to set loading to false here.
     } catch (error: any) {
        console.error("Google Sign-up Error:", error);
        console.error("Error Code:", error.code);
@@ -228,7 +231,7 @@ export default function RegisterPage() {
               </span>
             </div>
           </div>
-           <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading || isGoogleLoading}>
+           <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isGoogleLoading}>
             {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon className="mr-2 h-4 w-4" />}
             Sign up with Google
           </Button>

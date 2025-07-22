@@ -43,6 +43,7 @@ export default function RegisterPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(true);
 
   const handleGoogleAuth = async (googleUser: FirebaseUser) => {
+    setIsGoogleLoading(true);
     try {
       const response = await fetch('https://yopracticando.com/api/google-auth.php', {
         method: 'POST',
@@ -58,8 +59,8 @@ export default function RegisterPage() {
 
       if (result.success && result.usuario) {
         localStorage.setItem('userId', String(result.usuario.id));
-        localStorage.setItem('userEmail', googleUser.email || '');
-        localStorage.setItem('userFullName', googleUser.displayName || 'Usuario');
+        localStorage.setItem('userEmail', result.usuario.email || '');
+        localStorage.setItem('userFullName', result.usuario.fullName || 'Usuario');
         localStorage.setItem('userType', result.usuario.tipo_usuario);
         window.dispatchEvent(new Event("storage"));
         toast({ title: "¡Éxito!", description: "Registro con Google exitoso." });
@@ -81,24 +82,30 @@ export default function RegisterPage() {
   
 
   useEffect(() => {
+    let isMounted = true;
     getRedirectResult(auth)
       .then((result) => {
-        if (result) {
-          handleGoogleAuth(result.user);
-        } else {
-            setIsGoogleLoading(false);
+        if(isMounted) {
+            if (result) {
+                handleGoogleAuth(result.user);
+            } else {
+                setIsGoogleLoading(false);
+            }
         }
       })
       .catch((error) => {
-        console.error("Google Sign-up Error:", error);
-        toast({
-          variant: "destructive",
-          title: "Error de Google",
-          description: error.message,
-        });
-        setIsGoogleLoading(false);
+        if(isMounted) {
+            console.error("Google Sign-up Error:", error);
+            toast({
+              variant: "destructive",
+              title: "Error de Google",
+              description: error.message,
+            });
+            setIsGoogleLoading(false);
+        }
       });
-  }, [router, toast]);
+      return () => { isMounted = false; }
+  }, []);
   
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -168,10 +175,11 @@ export default function RegisterPage() {
     }
   }
   
-  if (isGoogleLoading && !isLoading) {
+  if (isGoogleLoading) {
     return (
      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
        <Loader2 className="h-16 w-16 animate-spin" />
+       <span className="ml-4 text-lg">Verificando con Google...</span>
      </div>
    );
  }
@@ -317,5 +325,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
-    

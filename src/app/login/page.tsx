@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
 import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -42,6 +42,26 @@ export default function LoginPage() {
     },
   });
 
+  useEffect(() => {
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          toast({ title: "Success", description: "Logged in successfully with Google." });
+          router.push("/profile");
+        }
+      } catch (error: any) {
+        console.error("Google Login Redirect Error:", error);
+        toast({
+          variant: "destructive",
+          title: "Google Login Failed",
+          description: error.message,
+        });
+      }
+    };
+    checkRedirect();
+  }, [router, toast]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
@@ -66,9 +86,7 @@ export default function LoginPage() {
     setGoogleIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      toast({ title: "Success", description: "Logged in successfully with Google." });
-      router.push("/profile");
+      await signInWithRedirect(auth, provider);
     } catch (error: any) {
        console.error("Google Login Error:", error);
        console.error("Error Code:", error.code);
@@ -78,8 +96,7 @@ export default function LoginPage() {
         title: "Google Login Failed",
         description: error.message,
       });
-    } finally {
-      setGoogleIsLoading(false);
+       setGoogleIsLoading(false);
     }
   }
 

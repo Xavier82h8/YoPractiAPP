@@ -36,6 +36,19 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
+// --- NUEVA FUNCIÓN DE LOGGING ---
+async function logToServer(message: string) {
+  try {
+    await fetch('https://yopracticando.com/api/edit-profile.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ logEntry: `REGISTER_PAGE: ${message}` }),
+    });
+  } catch (error) {
+    console.error('Failed to log to server:', error);
+  }
+}
+
 export default function RegisterPage() {
   const { toast } = useToast();
   const router = useRouter();
@@ -43,14 +56,14 @@ export default function RegisterPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(true);
 
   const handleGoogleAuth = async (googleUser: FirebaseUser) => {
-    console.log('[DEBUG] Paso 2: Entrando a handleGoogleAuth con el usuario de Google:', googleUser);
+    await logToServer(`[Paso 2] Entrando a handleGoogleAuth con el usuario de Google: ${googleUser.email}`);
     setIsGoogleLoading(true);
     const body = {
         email: googleUser.email,
         fullName: googleUser.displayName,
         googleId: googleUser.uid,
     };
-    console.log('[DEBUG] Paso 3: Enviando los siguientes datos a la API /google-auth.php:', body);
+    await logToServer(`[Paso 3] Enviando los siguientes datos a la API /google-auth.php: ${JSON.stringify(body)}`);
     
     try {
       const response = await fetch('https://yopracticando.com/api/google-auth.php', {
@@ -60,23 +73,23 @@ export default function RegisterPage() {
       });
 
       const result = await response.json();
-      console.log('[DEBUG] Paso 4: Respuesta recibida de la API:', result);
+      await logToServer(`[Paso 4] Respuesta recibida de la API: ${JSON.stringify(result)}`);
 
       if (result.success && result.usuario) {
-        console.log('[DEBUG] Paso 5: La API devolvió éxito. Guardando datos en localStorage.');
+        await logToServer('[Paso 5] La API devolvió éxito. Guardando datos en localStorage.');
         localStorage.setItem('userId', String(result.usuario.id));
         localStorage.setItem('userEmail', result.usuario.email || '');
         localStorage.setItem('userFullName', result.usuario.fullName || 'Usuario');
         localStorage.setItem('userType', result.usuario.tipo_usuario);
         window.dispatchEvent(new Event("storage"));
         toast({ title: "¡Éxito!", description: "Registro con Google exitoso." });
-        console.log('[DEBUG] Paso 6: Redirigiendo a /profile...');
+        await logToServer('[Paso 6] Redirigiendo a /profile...');
         router.push("/profile");
       } else {
         throw new Error(result.message || 'Error al procesar el registro con Google.');
       }
     } catch (error: any) {
-      console.error("[DEBUG] ¡ERROR! Fallo en la comunicación con la API o la API devolvió un error:", error);
+      await logToServer(`[¡ERROR!] Fallo en la comunicación con la API o la API devolvió un error: ${error.message}`);
       toast({
         variant: "destructive",
         title: "Error de Servidor",
@@ -89,24 +102,24 @@ export default function RegisterPage() {
 
   useEffect(() => {
     let isMounted = true;
-    console.log('[DEBUG] Paso 1: La página de registro se ha cargado. Verificando resultado de redirección de Google.');
+    logToServer('[Paso 1] La página de registro se ha cargado. Verificando resultado de redirección de Google.');
     getRedirectResult(auth)
       .then((result) => {
         if (!isMounted) {
-            console.log('[DEBUG] El componente ya no está montado, se ignora el resultado.');
+            logToServer('[DEBUG] El componente ya no está montado, se ignora el resultado.');
             return;
         }
         if (result) {
-            console.log('[DEBUG] Se encontró un resultado de redirección de Google. Procesando...');
+            logToServer(`[DEBUG] Se encontró un resultado de redirección de Google. Procesando para el usuario: ${result.user.email}`);
             handleGoogleAuth(result.user);
         } else {
-            console.log('[DEBUG] No se encontró resultado de redirección. La página se cargó normally.');
+            logToServer('[DEBUG] No se encontró resultado de redirección. La página se cargó normalmente.');
             setIsGoogleLoading(false);
         }
       })
       .catch((error) => {
         if (!isMounted) return;
-        console.error("[DEBUG] ¡ERROR! Fallo al obtener el resultado de la redirección de Google:", error);
+        logToServer(`[¡ERROR!] Fallo al obtener el resultado de la redirección de Google: ${error.code} - ${error.message}`);
         toast({
           variant: "destructive",
           title: "Error de Google",
@@ -131,6 +144,7 @@ export default function RegisterPage() {
 
   async function handleGoogleRegister() {
     setIsGoogleLoading(true);
+    await logToServer('Iniciando el proceso de redirección de Google...');
     const provider = new GoogleAuthProvider();
     await signInWithRedirect(auth, provider);
   }
@@ -338,5 +352,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
-    

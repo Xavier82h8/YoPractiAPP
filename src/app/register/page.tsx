@@ -15,13 +15,12 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
-
 const formSchema = z.object({
-  fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
-  email: z.string().email({ message: "Invalid email address." }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  fullName: z.string().min(2, { message: "El nombre completo debe tener al menos 2 caracteres." }),
+  email: z.string().email({ message: "La dirección de correo electrónico no es válida." }),
+  password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
   userType: z.enum(["alumno", "empresa"], {
-    required_error: "You need to select a user type.",
+    required_error: "Debes seleccionar un tipo de usuario.",
   }),
 });
 
@@ -36,30 +35,64 @@ export default function RegisterPage() {
       fullName: "",
       email: "",
       password: "",
+      userType: "alumno",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    // Here you would typically call your own API for registration
-    // For now, we will just show a success toast and redirect.
-    console.log("Registration values:", values);
-    
-    // Replace this with your actual API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    toast({ title: "Success", description: "Account created successfully." });
-    router.push("/login");
+    try {
+      const response = await fetch('https://yopracticando.com/api/enviar_verificacion.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: values.email.trim(),
+          password: values.password,
+          tipoUsuario: values.userType,
+          username: values.fullName.trim(),
+          // Puedes agregar otros campos como 'empresa' si es necesario
+          empresa: values.userType === 'empresa' ? values.fullName.trim() : '',
+        }),
+      });
 
-    setIsLoading(false);
+      if (!response.ok) {
+        // Si el servidor responde con un error, intenta leer el JSON del cuerpo
+        const errorResult = await response.json().catch(() => null);
+        throw new Error(errorResult?.message || `Error del servidor: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast({ title: "¡Registro Exitoso!", description: "Te hemos enviado un correo para verificar tu cuenta." });
+        router.push(`/verify-account?email=${encodeURIComponent(values.email)}`);
+      } else {
+         toast({
+          variant: "destructive",
+          title: "Error en el Registro",
+          description: result.message || "No se pudo completar el registro. Intenta de nuevo.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error de Conexión",
+        description: error.message || "No se pudo conectar al servidor. Por favor, intenta de nuevo.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
       <Card className="w-full max-w-lg shadow-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="font-headline text-3xl">Create an Account</CardTitle>
-          <CardDescription>Join YoPracticando to find your perfect match.</CardDescription>
+          <CardTitle className="font-headline text-3xl">Crear una Cuenta</CardTitle>
+          <CardDescription>Únete a YoPracticando para encontrar tu match perfecto.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -69,7 +102,7 @@ export default function RegisterPage() {
                 name="userType"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
-                    <FormLabel>I am a...</FormLabel>
+                    <FormLabel>Soy un...</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
@@ -117,9 +150,9 @@ export default function RegisterPage() {
                 name="fullName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full Name</FormLabel>
+                    <FormLabel>{form.getValues("userType") === 'alumno' ? 'Nombre Completo' : 'Nombre de la Empresa'}</FormLabel>
                     <FormControl>
-                      <Input placeholder="John Doe" {...field} disabled={isLoading}/>
+                      <Input placeholder={form.getValues("userType") === 'alumno' ? 'John Doe' : 'Innovate Inc.'} {...field} disabled={isLoading}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -130,9 +163,9 @@ export default function RegisterPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Correo Electrónico</FormLabel>
                     <FormControl>
-                      <Input placeholder="name@example.com" {...field} disabled={isLoading}/>
+                      <Input placeholder="nombre@ejemplo.com" {...field} disabled={isLoading}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -143,7 +176,7 @@ export default function RegisterPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Contraseña</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="••••••••" {...field} disabled={isLoading}/>
                     </FormControl>
@@ -153,14 +186,14 @@ export default function RegisterPage() {
               />
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Account
+                Crear Cuenta
               </Button>
             </form>
           </Form>
           <p className="mt-4 text-center text-sm">
-            Already have an account?{" "}
+            ¿Ya tienes una cuenta?{" "}
             <Link href="/login" className="underline hover:text-primary">
-              Sign in
+              Inicia Sesión
             </Link>
           </p>
         </CardContent>

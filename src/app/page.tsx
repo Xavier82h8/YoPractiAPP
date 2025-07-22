@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoginBanner } from "@/components/login-banner";
 import { Briefcase, Building, Code, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -44,6 +45,7 @@ const internships = [
 export default function Home() {
   return (
     <div className="flex flex-col">
+       <LoginBanner />
       <section className="py-20 md:py-32 bg-secondary/30">
         <div className="container mx-auto text-center">
           <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tighter mb-4">

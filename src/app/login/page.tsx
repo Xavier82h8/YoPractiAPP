@@ -44,22 +44,25 @@ export default function LoginPage() {
       });
 
       if (!response.ok) {
-        throw new Error(`Error de red: ${response.status}`);
+        const errorResult = await response.json().catch(() => null);
+        throw new Error(errorResult?.message || `Error de red: ${response.status}`);
       }
 
       const result = await response.json();
 
       if (result.success && result.usuario) {
-        // En una aplicación web, es mejor manejar la sesión con cookies httpOnly desde el backend.
-        // Como segunda opción, usamos localStorage.
         localStorage.setItem('userId', String(result.usuario.id));
+        localStorage.setItem('userEmail', values.email.trim()); // Store email
         localStorage.setItem('userType', result.usuario.tipo_usuario);
         if (result.token) {
           localStorage.setItem('userToken', result.token);
         }
         
+        // Dispatch a storage event to notify other components like AuthNav
+        window.dispatchEvent(new Event("storage"));
+        
         toast({ title: "¡Éxito!", description: "Inicio de sesión exitoso." });
-        router.push("/profile"); // Redirigir al perfil del usuario
+        router.push("/profile");
       } else {
         toast({
           variant: "destructive",
@@ -68,7 +71,6 @@ export default function LoginPage() {
         });
       }
     } catch (error: any) {
-      console.error('Error al iniciar sesión:', error);
       toast({
         variant: "destructive",
         title: "Error de Conexión",

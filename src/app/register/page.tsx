@@ -98,7 +98,7 @@ export default function RegisterPage() {
         });
         setIsGoogleLoading(false);
       });
-  }, []);
+  }, [router, toast]);
   
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -317,3 +317,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+    

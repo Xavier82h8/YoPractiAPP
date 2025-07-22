@@ -93,7 +93,7 @@ export default function LoginPage() {
         });
         setIsGoogleLoading(false);
       });
-  }, []);
+  }, [router, toast]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -243,3 +243,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

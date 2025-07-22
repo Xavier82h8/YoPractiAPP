@@ -36,18 +36,17 @@ export default function ProfilePage() {
         return;
     }
 
-    // Cargar datos del usuario desde localStorage
-    const userEmail = localStorage.getItem('userEmail');
-    const userType = localStorage.getItem('userType');
-    const userFullName = localStorage.getItem('userFullName');
+    const email = localStorage.getItem('userEmail') || '';
+    const userType = localStorage.getItem('userType') || 'alumno';
+    const fullName = localStorage.getItem('userFullName') || "Usuario";
     
     // Aquí podrías hacer un fetch a tu API para obtener los datos más recientes.
     // Por ahora, usamos los de localStorage y valores por defecto.
     setUserProfile({
         id: userId,
-        email: userEmail || '',
-        userType: userType || 'alumno',
-        fullName: userFullName || "Usuario",
+        email: email,
+        userType: userType,
+        fullName: fullName,
         phone: "", // Deberías obtener esto de tu API
         skills: "", // Deberías obtener esto de tu API
         experience: "", // Deberías obtener esto de tu API
@@ -67,19 +66,21 @@ export default function ProfilePage() {
     setIsLoading(true);
 
     try {
+        const profileData = {
+            id: userProfile.id,
+            fullName: userProfile.fullName,
+            email: userProfile.email,
+            phone: userProfile.phone,
+            skills: userProfile.skills,
+            experience: userProfile.experience,
+        };
+
         const response = await fetch('https://yopracticando.com/api/editar_usuario.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                id: userProfile.id,
-                fullName: userProfile.fullName,
-                email: userProfile.email,
-                phone: userProfile.phone,
-                skills: userProfile.skills,
-                experience: userProfile.experience,
-            }),
+            body: JSON.stringify(profileData),
         });
 
         const result = await response.json();

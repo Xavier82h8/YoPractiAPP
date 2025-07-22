@@ -48,9 +48,10 @@ export default function RegisterPage() {
         if (result) {
           const user = result.user;
           console.log('User registered with Google:', user);
+          // Here you can add logic to also register the user in your own backend if needed
           localStorage.setItem('userId', user.uid);
           localStorage.setItem('userEmail', user.email || '');
-          localStorage.setItem('userType', 'alumno'); // Default or get from your API
+          localStorage.setItem('userType', 'alumno'); // Default type for Google sign-up
           window.dispatchEvent(new Event("storage"));
           toast({ title: "¡Registro Exitoso!", description: "Tu cuenta ha sido creada con Google." });
           router.push("/profile");
@@ -98,7 +99,7 @@ export default function RegisterPage() {
             username: values.fullName.trim(),
             empresa: values.userType === 'empresa' ? values.fullName.trim() : '',
             phone: values.phone,
-            phonePrefix: '+51' // Hardcoded as per requirement
+            phonePrefix: '+51'
         };
 
       const response = await fetch('https://yopracticando.com/api/enviar_verificacion.php', {
@@ -137,7 +138,7 @@ export default function RegisterPage() {
     }
   }
   
-  if (isGoogleLoading) {
+  if (isGoogleLoading && !isLoading) {
     return (
      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
        <Loader2 className="h-16 w-16 animate-spin" />

@@ -31,6 +31,7 @@ try {
     // 1. Buscar si el usuario ya existe por google_id o email
     $query = "SELECT * FROM registro_usuarios WHERE google_id = ? OR email = ?";
     $stmt = $conexion->prepare($query);
+    if (!$stmt) { throw new Exception("Error al preparar la consulta de búsqueda."); }
     $stmt->bind_param("ss", $googleId, $email);
     $stmt->execute();
     $resultado = $stmt->get_result();
@@ -41,10 +42,11 @@ try {
         // --- Usuario ya existe ---
         $userId = $usuario['id'];
         
-        // Si el usuario existe pero no tiene google_id, lo actualizamos.
-        if (empty($usuario['google_id'])) {
-            $updateQuery = "UPDATE registro_usuarios SET google_id = ? WHERE id = ?";
+        // Si el usuario existe pero no tiene google_id, o no está verificado, lo actualizamos.
+        if (empty($usuario['google_id']) || $usuario['verificado'] != 1) {
+            $updateQuery = "UPDATE registro_usuarios SET google_id = ?, verificado = 1 WHERE id = ?";
             $updateStmt = $conexion->prepare($updateQuery);
+            if (!$updateStmt) { throw new Exception("Error al preparar la consulta de actualización."); }
             $updateStmt->bind_param("si", $googleId, $userId);
             $updateStmt->execute();
             $updateStmt->close();
@@ -55,6 +57,8 @@ try {
             "message" => "Usuario autenticado correctamente.",
             "usuario" => [
                 "id" => $userId,
+                "email" => $usuario['email'],
+                "fullName" => $usuario['nombre_usuario'] ?: $usuario['nombre_empresa'],
                 "tipo_usuario" => $usuario['tipo_usuario']
             ]
         ]);
@@ -63,10 +67,13 @@ try {
         // --- Usuario no existe, hay que crearlo ---
         $tipoUsuario = 'alumno'; // Por defecto para registros con Google
         $passwordHash = password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT); // Contraseña aleatoria segura
+        $defaultPhone = '000000000'; // Valor predeterminado para el campo NOT NULL
+        $defaultCountryCode = 'NA'; // Valor predeterminado para el campo NOT NULL
 
-        $insertQuery = "INSERT INTO registro_usuarios (nombre_usuario, email, password, tipo_usuario, verificado, google_id, fecha_registro) VALUES (?, ?, ?, ?, 1, ?, NOW())";
+        $insertQuery = "INSERT INTO registro_usuarios (nombre_usuario, email, password, tipo_usuario, verificado, google_id, fecha_registro, telefono, codigo_pais) VALUES (?, ?, ?, ?, 1, ?, NOW(), ?, ?)";
         $insertStmt = $conexion->prepare($insertQuery);
-        $insertStmt->bind_param("sssss", $fullName, $email, $passwordHash, $tipoUsuario, $googleId);
+        if (!$insertStmt) { throw new Exception("Error al preparar la consulta de inserción."); }
+        $insertStmt->bind_param("sssssss", $fullName, $email, $passwordHash, $tipoUsuario, $googleId, $defaultPhone, $defaultCountryCode);
         
         if ($insertStmt->execute()) {
             $newUserId = $insertStmt->insert_id;
@@ -75,6 +82,8 @@ try {
                 "message" => "Usuario registrado y verificado con Google exitosamente.",
                 "usuario" => [
                     "id" => $newUserId,
+                    "email" => $email,
+                    "fullName" => $fullName,
                     "tipo_usuario" => $tipoUsuario
                 ]
             ]);

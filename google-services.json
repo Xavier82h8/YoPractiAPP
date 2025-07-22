@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "934993781324",
+    "project_id": "yopracticando-ddd79",
+    "storage_bucket": "yopracticando-ddd79.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:934993781324:android:ce48c5208857787f52cae9",
+        "android_client_info": {
+          "package_name": "com.yopracticando"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOxkz5sexhZ6HTjTvuCRx77OEW1GnviBo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -9,8 +10,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
-import { User, Building } from "lucide-react";
+import { User, Building, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { auth } from "@/lib/firebase";
+import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+
 
 const formSchema = z.object({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
@@ -29,6 +35,11 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 export default function RegisterPage() {
+  const { toast } = useToast();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setGoogleIsLoading] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -38,9 +49,49 @@ export default function RegisterPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // Handle registration logic here
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      await updateProfile(userCredential.user, {
+        displayName: values.fullName,
+      });
+      
+      // Here you would typically also save the userType to your database (e.g., Firestore)
+      // associated with the user's UID (userCredential.user.uid)
+
+      toast({ title: "Success", description: "Account created successfully." });
+      router.push("/profile");
+
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Registration Failed",
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleGoogleLogin() {
+    setGoogleIsLoading(true);
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      toast({ title: "Success", description: "Signed up successfully with Google." });
+      router.push("/profile");
+    } catch (error: any) {
+       console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Google Sign-up Failed",
+        description: error.message,
+      });
+    } finally {
+      setGoogleIsLoading(false);
+    }
   }
 
   return (
@@ -64,6 +115,7 @@ export default function RegisterPage() {
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                         className="grid grid-cols-2 gap-4"
+                        disabled={isLoading || isGoogleLoading}
                       >
                         <FormItem>
                           <FormControl>
@@ -107,7 +159,7 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="John Doe" {...field} />
+                      <Input placeholder="John Doe" {...field} disabled={isLoading || isGoogleLoading}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -120,7 +172,7 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="name@example.com" {...field} />
+                      <Input placeholder="name@example.com" {...field} disabled={isLoading || isGoogleLoading}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -133,13 +185,16 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
+                      <Input type="password" placeholder="••••••••" {...field} disabled={isLoading || isGoogleLoading}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">Create Account</Button>
+              <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Account
+              </Button>
             </form>
           </Form>
           <div className="relative my-6">
@@ -152,8 +207,8 @@ export default function RegisterPage() {
               </span>
             </div>
           </div>
-          <Button variant="outline" className="w-full">
-            <GoogleIcon className="mr-2 h-4 w-4" />
+           <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading || isGoogleLoading}>
+            {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon className="mr-2 h-4 w-4" />}
             Sign up with Google
           </Button>
           <p className="mt-4 text-center text-sm">

@@ -49,7 +49,9 @@ export default function LoginPage() {
       toast({ title: "Success", description: "Logged in successfully." });
       router.push("/profile");
     } catch (error: any) {
-      console.error(error);
+      console.error("Login Error:", error);
+      console.error("Error Code:", error.code);
+      console.error("Error Message:", error.message);
       toast({
         variant: "destructive",
         title: "Login Failed",
@@ -68,7 +70,9 @@ export default function LoginPage() {
       toast({ title: "Success", description: "Logged in successfully with Google." });
       router.push("/profile");
     } catch (error: any) {
-       console.error(error);
+       console.error("Google Login Error:", error);
+       console.error("Error Code:", error.code);
+       console.error("Error Message:", error.message);
       toast({
         variant: "destructive",
         title: "Google Login Failed",

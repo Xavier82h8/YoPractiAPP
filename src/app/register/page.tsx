@@ -66,7 +66,9 @@ export default function RegisterPage() {
       router.push("/verify-account");
 
     } catch (error: any) {
-      console.error(error);
+      console.error("Registration Error:", error);
+      console.error("Error Code:", error.code);
+      console.error("Error Message:", error.message);
       toast({
         variant: "destructive",
         title: "Registration Failed",
@@ -91,7 +93,9 @@ export default function RegisterPage() {
       toast({ title: "Success", description: "Signed up successfully with Google." });
       router.push("/profile");
     } catch (error: any) {
-       console.error(error);
+       console.error("Google Sign-up Error:", error);
+       console.error("Error Code:", error.code);
+       console.error("Error Message:", error.message);
       toast({
         variant: "destructive",
         title: "Google Sign-up Failed",

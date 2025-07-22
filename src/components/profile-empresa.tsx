@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
-import { Building, Mail, Globe, Tag, Calendar, Users, Shield, Phone, Loader2, Workflow } from "lucide-react";
+import { Building, Mail, Globe, Tag, Calendar, Users, Shield, Phone, Loader2, Workflow, CloudUpload, MapPin } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import type { UserProfile } from "@/app/profile/page";
@@ -21,6 +21,7 @@ interface EmpresaProfileProps {
 // Opciones para los campos de selección
 const categories = ["Tecnología", "Marketing", "Recursos Humanos", "Diseño", "Ventas", "Finanzas"];
 const companySizes = ["1-10 empleados", "11-50 empleados", "51-200 empleados", "201-500 empleados", "501+ empleados"];
+const locations = ["Lima", "Arequipa", "Trujillo", "Cusco", "Otra"];
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: currentYear - 1900 + 1 }, (_, i) => String(currentYear - i));
 
@@ -38,6 +39,16 @@ export default function EmpresaProfile({ initialProfileData }: EmpresaProfilePro
 
   const handleSelectChange = (id: keyof UserProfile, value: string) => {
     setUserProfile(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Por ahora, guardaremos el nombre del archivo.
+      // En una implementación real, aquí se subiría el archivo a un servicio de almacenamiento
+      // y se guardaría la URL resultante.
+      setUserProfile(prev => ({ ...prev, logo: file.name }));
+    }
   };
   
   const handleSaveChanges = async (e: React.FormEvent) => {
@@ -120,6 +131,7 @@ export default function EmpresaProfile({ initialProfileData }: EmpresaProfilePro
         </CardHeader>
         <CardContent className="p-6 md:p-8">
           <form onSubmit={handleSaveChanges} className="space-y-8">
+            <h3 className="text-xl font-semibold font-headline border-b pb-2">Información General</h3>
             {/* Fila 1 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -189,6 +201,47 @@ export default function EmpresaProfile({ initialProfileData }: EmpresaProfilePro
                     </SelectContent>
                 </Select>
             </div>
+            
+            <Separator className="my-8" />
+            
+            <h3 className="text-xl font-semibold font-headline border-b pb-2">Media</h3>
+            <div className="space-y-2">
+                <Label htmlFor="logo" className="flex items-center gap-2">Logo <span className="text-red-500">*</span></Label>
+                <div className="flex items-center justify-center w-full">
+                    <Label htmlFor="logo-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/80">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <CloudUpload className="w-10 h-10 mb-3 text-muted-foreground" />
+                            <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Haga clic aquí</span> o arrastre su archivo para cargar</p>
+                            <p className="text-xs text-muted-foreground">Tamaño máximo: 1000kb | Formatos: JPG, PNG, SVG</p>
+                        </div>
+                        <Input id="logo-upload" type="file" className="hidden" onChange={handleFileChange} accept=".jpg,.jpeg,.png,.svg" />
+                    </Label>
+                </div>
+                {userProfile.logo && <p className="text-sm text-muted-foreground">Archivo seleccionado: {userProfile.logo}</p>}
+            </div>
+
+            <Separator className="my-8" />
+
+            <h3 className="text-xl font-semibold font-headline border-b pb-2">Ubicación</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="location" className="flex items-center gap-2"><MapPin className="w-4 h-4"/>Ubicación</Label>
+                <Select value={userProfile.location} onValueChange={(value) => handleSelectChange('location', value)} disabled={isLoading}>
+                    <SelectTrigger id="location"><SelectValue placeholder="Seleccione una ubicación" /></SelectTrigger>
+                    <SelectContent>
+                        {locations.map(loc => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address" className="flex items-center gap-2">Dirección</Label>
+                <Input id="address" value={userProfile.address || ''} onChange={handleInputChange} placeholder="Ingrese la dirección completa" disabled={isLoading} />
+              </div>
+            </div>
+
+
+            <Separator className="my-8" />
+
 
             <div className="flex flex-col md:flex-row justify-end gap-3">
               <Button type="submit" disabled={isLoading}>

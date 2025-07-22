@@ -21,6 +21,9 @@ export interface UserProfile {
   category?: string;
   foundedYear?: string;
   companySize?: string;
+  logo?: string;
+  location?: string;
+  address?: string;
 }
 
 
@@ -54,6 +57,9 @@ export default function ProfilePage() {
         category: localStorage.getItem('userCategory') || "",
         foundedYear: localStorage.getItem('userFoundedYear') || "",
         companySize: localStorage.getItem('userCompanySize') || "",
+        logo: localStorage.getItem('userLogo') || "",
+        location: localStorage.getItem('userLocation') || "",
+        address: localStorage.getItem('userAddress') || "",
     };
 
     setUserProfile(profile);

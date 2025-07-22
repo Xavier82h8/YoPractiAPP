@@ -44,6 +44,7 @@ export default function RegisterPage() {
 
   const handleGoogleAuth = async (googleUser: FirebaseUser) => {
     console.log('[DEBUG] Paso 2: Entrando a handleGoogleAuth con el usuario de Google:', googleUser);
+    setIsGoogleLoading(true);
     const body = {
         email: googleUser.email,
         fullName: googleUser.displayName,
@@ -218,10 +219,10 @@ export default function RegisterPage() {
                       >
                         <FormItem>
                           <FormControl>
-                            <RadioGroupItem value="alumno" className="sr-only" />
+                            <RadioGroupItem value="alumno" id="userType-alumno" className="sr-only" />
                           </FormControl>
                           <FormLabel
-                            htmlFor={field.name + "-alumno"}
+                            htmlFor="userType-alumno"
                             className={cn(
                               "flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer",
                               field.value === 'alumno' && "border-primary"
@@ -233,10 +234,10 @@ export default function RegisterPage() {
                         </FormItem>
                         <FormItem>
                           <FormControl>
-                            <RadioGroupItem value="empresa" className="sr-only" />
+                            <RadioGroupItem value="empresa" id="userType-empresa" className="sr-only" />
                           </FormControl>
                           <FormLabel
-                            htmlFor={field.name + "-empresa"}
+                            htmlFor="userType-empresa"
                             className={cn(
                               "flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer",
                               field.value === 'empresa' && "border-primary"
@@ -258,9 +259,9 @@ export default function RegisterPage() {
                 name="fullName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{form.getValues("userType") === 'alumno' ? 'Nombre Completo' : 'Nombre de la Empresa'}</FormLabel>
+                    <FormLabel>{form.watch("userType") === 'alumno' ? 'Nombre Completo' : 'Nombre de la Empresa'}</FormLabel>
                     <FormControl>
-                      <Input placeholder={form.getValues("userType") === 'alumno' ? 'John Doe' : 'Innovate Inc.'} {...field} disabled={isLoading}/>
+                      <Input placeholder={form.watch("userType") === 'alumno' ? 'John Doe' : 'Innovate Inc.'} {...field} disabled={isLoading}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -321,7 +322,8 @@ export default function RegisterPage() {
               </span>
             </div>
           </div>
-          <Button variant="outline" className="w-full" onClick={handleGoogleRegister} disabled={isGoogleLoading}>
+           <Button variant="outline" className="w-full" onClick={handleGoogleRegister} disabled={isGoogleLoading}>
+            {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             <GoogleIcon className="mr-2" />
             Google
           </Button>
@@ -336,3 +338,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+    

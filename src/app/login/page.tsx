@@ -37,32 +37,40 @@ export default function LoginPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(true); // Start as true to handle redirect
 
   const handleGoogleAuth = async (googleUser: FirebaseUser) => {
+    console.log('[DEBUG] Paso 2: Entrando a handleGoogleAuth con el usuario de Google:', googleUser);
+    const body = {
+      email: googleUser.email,
+      fullName: googleUser.displayName,
+      googleId: googleUser.uid,
+    };
+    console.log('[DEBUG] Paso 3: Enviando los siguientes datos a la API /google-auth.php:', body);
+
     try {
       const response = await fetch('https://yopracticando.com/api/google-auth.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: googleUser.email,
-          fullName: googleUser.displayName,
-          googleId: googleUser.uid,
-        }),
+        body: JSON.stringify(body),
       });
 
       const result = await response.json();
+      console.log('[DEBUG] Paso 4: Respuesta recibida de la API:', result);
+
 
       if (result.success && result.usuario) {
+        console.log('[DEBUG] Paso 5: La API devolvió éxito. Guardando datos en localStorage.');
         localStorage.setItem('userId', String(result.usuario.id));
         localStorage.setItem('userEmail', result.usuario.email || '');
         localStorage.setItem('userFullName', result.usuario.fullName || 'Usuario');
         localStorage.setItem('userType', result.usuario.tipo_usuario);
         window.dispatchEvent(new Event("storage"));
         toast({ title: "¡Éxito!", description: "Inicio de sesión con Google exitoso." });
+        console.log('[DEBUG] Paso 6: Redirigiendo a /profile...');
         router.push("/profile");
       } else {
         throw new Error(result.message || 'Error al procesar el inicio de sesión con Google.');
       }
     } catch (error: any) {
-      console.error("Error en handleGoogleAuth:", error);
+      console.error("[DEBUG] ¡ERROR! Fallo en la comunicación con la API o la API devolvió un error:", error);
       toast({
         variant: "destructive",
         title: "Error de Servidor",
@@ -75,20 +83,24 @@ export default function LoginPage() {
 
   useEffect(() => {
     let isMounted = true;
+    console.log('[DEBUG] Paso 1: La página de login se ha cargado. Verificando resultado de redirección de Google.');
     getRedirectResult(auth)
       .then((result) => {
-        if (!isMounted) return;
+        if (!isMounted) {
+          console.log('[DEBUG] El componente ya no está montado, se ignora el resultado.');
+          return;
+        }
         if (result) {
-            // Google redirect result is available, handle it
+            console.log('[DEBUG] Se encontró un resultado de redirección de Google. Procesando...');
             handleGoogleAuth(result.user);
         } else {
-            // No redirect result, probably a direct navigation
+            console.log('[DEBUG] No se encontró resultado de redirección. La página se cargó normalmente.');
             setIsGoogleLoading(false);
         }
       })
       .catch((error) => {
         if (!isMounted) return;
-        console.error("Google Sign-in Error:", error);
+        console.error("[DEBUG] ¡ERROR! Fallo al obtener el resultado de la redirección de Google:", error);
         toast({
           variant: "destructive",
           title: "Error de Google",

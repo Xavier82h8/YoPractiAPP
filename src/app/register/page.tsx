@@ -43,7 +43,6 @@ export default function RegisterPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(true);
 
   const handleGoogleAuth = async (googleUser: FirebaseUser) => {
-    setIsGoogleLoading(true);
     try {
       const response = await fetch('https://yopracticando.com/api/google-auth.php', {
         method: 'POST',
@@ -75,8 +74,7 @@ export default function RegisterPage() {
         title: "Error de Servidor",
         description: error.message,
       });
-    } finally {
-        setIsGoogleLoading(false);
+      setIsGoogleLoading(false);
     }
   };
   
@@ -85,24 +83,22 @@ export default function RegisterPage() {
     let isMounted = true;
     getRedirectResult(auth)
       .then((result) => {
-        if(isMounted) {
-            if (result) {
-                handleGoogleAuth(result.user);
-            } else {
-                setIsGoogleLoading(false);
-            }
+        if (!isMounted) return;
+        if (result) {
+            handleGoogleAuth(result.user);
+        } else {
+            setIsGoogleLoading(false);
         }
       })
       .catch((error) => {
-        if(isMounted) {
-            console.error("Google Sign-up Error:", error);
-            toast({
-              variant: "destructive",
-              title: "Error de Google",
-              description: error.message,
-            });
-            setIsGoogleLoading(false);
-        }
+        if (!isMounted) return;
+        console.error("Google Sign-up Error:", error);
+        toast({
+          variant: "destructive",
+          title: "Error de Google",
+          description: error.message,
+        });
+        setIsGoogleLoading(false);
       });
       return () => { isMounted = false; }
   }, []);
@@ -311,7 +307,7 @@ export default function RegisterPage() {
             </div>
           </div>
           <Button variant="outline" className="w-full" onClick={handleGoogleRegister} disabled={isGoogleLoading}>
-            {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon className="mr-2" />}
+            <GoogleIcon className="mr-2" />
             Google
           </Button>
           <p className="mt-4 text-center text-sm">

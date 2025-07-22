@@ -34,10 +34,9 @@ export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(true);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(true); // Start as true to handle redirect
 
   const handleGoogleAuth = async (googleUser: FirebaseUser) => {
-    setIsGoogleLoading(true);
     try {
       const response = await fetch('https://yopracticando.com/api/google-auth.php', {
         method: 'POST',
@@ -69,8 +68,7 @@ export default function LoginPage() {
         title: "Error de Servidor",
         description: error.message,
       });
-    } finally {
-        setIsGoogleLoading(false);
+      setIsGoogleLoading(false); // Ensure loading is stopped on error
     }
   };
 
@@ -79,24 +77,24 @@ export default function LoginPage() {
     let isMounted = true;
     getRedirectResult(auth)
       .then((result) => {
-        if (isMounted) {
-            if (result) {
-                handleGoogleAuth(result.user);
-            } else {
-                setIsGoogleLoading(false);
-            }
+        if (!isMounted) return;
+        if (result) {
+            // Google redirect result is available, handle it
+            handleGoogleAuth(result.user);
+        } else {
+            // No redirect result, probably a direct navigation
+            setIsGoogleLoading(false);
         }
       })
       .catch((error) => {
-        if (isMounted) {
-            console.error("Google Sign-in Error:", error);
-            toast({
-              variant: "destructive",
-              title: "Error de Google",
-              description: error.message,
-            });
-            setIsGoogleLoading(false);
-        }
+        if (!isMounted) return;
+        console.error("Google Sign-in Error:", error);
+        toast({
+          variant: "destructive",
+          title: "Error de Google",
+          description: error.message,
+        });
+        setIsGoogleLoading(false);
       });
 
       return () => { isMounted = false; }
@@ -230,7 +228,7 @@ export default function LoginPage() {
             </div>
           </div>
           <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isGoogleLoading}>
-            {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon className="mr-2" />}
+            <GoogleIcon className="mr-2" />
             Google
           </Button>
         </CardContent>

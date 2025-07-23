@@ -44,7 +44,7 @@ async function logToServer(message: string) {
       body: JSON.stringify({ logEntry: `REGISTER_PAGE: ${message}` }),
     });
   } catch (error) {
-    console.error('Failed to log to server:', error);
+    console.error('Error al enviar log al servidor:', error);
   }
 }
 
@@ -53,83 +53,73 @@ export default function RegisterPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(true);
-
-  const handleGoogleAuth = async (googleUser: FirebaseUser) => {
-    await logToServer(`[Paso 2] Entrando a handleGoogleAuth con el usuario de Google: ${googleUser.email}`);
-    setIsGoogleLoading(true);
-    const body = {
-        email: googleUser.email,
-        fullName: googleUser.displayName,
-        googleId: googleUser.uid,
-    };
-    await logToServer(`[Paso 3] Enviando los siguientes datos a la API /google-auth.php: ${JSON.stringify(body)}`);
-    
-    try {
-      const response = await fetch('https://yopracticando.com/api/google-auth.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      const result = await response.json();
-      await logToServer(`[Paso 4] Respuesta recibida de la API: ${JSON.stringify(result)}`);
-
-      if (result.success && result.usuario) {
-        await logToServer('[Paso 5] La API devolvió éxito. Guardando datos en localStorage.');
-        localStorage.setItem('userId', String(result.usuario.id));
-        localStorage.setItem('userEmail', result.usuario.email || '');
-        localStorage.setItem('userFullName', result.usuario.fullName || 'Usuario');
-        localStorage.setItem('userType', result.usuario.tipo_usuario);
-        window.dispatchEvent(new Event("storage"));
-        toast({ title: "¡Éxito!", description: "Registro con Google exitoso." });
-        await logToServer('[Paso 6] Redirigiendo a /profile...');
-        router.push("/profile");
-      } else {
-        throw new Error(result.message || 'Error al procesar el registro con Google.');
-      }
-    } catch (error: any) {
-      await logToServer(`[¡ERROR!] Fallo en la comunicación con la API o la API devolvió un error: ${error.message}`);
-      toast({
-        variant: "destructive",
-        title: "Error de Servidor",
-        description: error.message,
-      });
-      setIsGoogleLoading(false);
-    }
-  };
   
-
   useEffect(() => {
     let isMounted = true;
-    logToServer('[Paso 1] La página de registro se ha cargado. Verificando resultado de redirección de Google.');
+    logToServer('[Paso 1.0] Página cargada. Verificando resultado de redirección de Google.');
+    
     getRedirectResult(auth)
-      .then((result) => {
+      .then(async (result) => {
         if (!isMounted) {
-            logToServer('[DEBUG] El componente ya no está montado, se ignora el resultado.');
-            return;
+          await logToServer('[DEBUG] El componente ya no está montado tras getRedirectResult. Se aborta.');
+          return;
         }
+
         if (result) {
-            logToServer(`[DEBUG] Se encontró un resultado de redirección de Google. Procesando para el usuario: ${result.user.email}`);
-            handleGoogleAuth(result.user);
-        } else {
-            logToServer('[DEBUG] No se encontró resultado de redirección. La página se cargó normalmente.');
+          await logToServer(`[Paso 2.0] Se encontró resultado de Google. Usuario: ${result.user.email}`);
+          const googleUser = result.user;
+          const body = {
+            email: googleUser.email,
+            fullName: googleUser.displayName,
+            googleId: googleUser.uid,
+          };
+          
+          await logToServer(`[Paso 3.0] Enviando datos a la API /google-auth.php: ${JSON.stringify(body)}`);
+
+          try {
+            const response = await fetch('https://yopracticando.com/api/google-auth.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+
+            const apiResult = await response.json();
+            await logToServer(`[Paso 4.0] Respuesta recibida de la API: ${JSON.stringify(apiResult)}`);
+
+            if (apiResult.success && apiResult.usuario) {
+              await logToServer('[Paso 5.0] La API devolvió éxito. Guardando datos en localStorage.');
+              localStorage.setItem('userId', String(apiResult.usuario.id));
+              localStorage.setItem('userEmail', apiResult.usuario.email || '');
+              localStorage.setItem('userFullName', apiResult.usuario.fullName || 'Usuario');
+              localStorage.setItem('userType', apiResult.usuario.tipo_usuario);
+              window.dispatchEvent(new Event("storage"));
+              toast({ title: "¡Éxito!", description: "Registro con Google exitoso." });
+              
+              await logToServer('[Paso 6.0] Redirigiendo a /profile...');
+              router.push("/profile");
+            } else {
+              throw new Error(apiResult.message || 'La API devolvió un error inesperado.');
+            }
+          } catch (error: any) {
+            await logToServer(`[¡ERROR en API!] Fallo en la comunicación o respuesta de la API: ${error.message}`);
+            toast({ variant: "destructive", title: "Error de Servidor", description: error.message });
             setIsGoogleLoading(false);
+          }
+        } else {
+          await logToServer('[DEBUG] No se encontró resultado de redirección. La página se cargó normalmente.');
+          setIsGoogleLoading(false);
         }
       })
-      .catch((error) => {
+      .catch(async (error) => {
         if (!isMounted) return;
-        logToServer(`[¡ERROR!] Fallo al obtener el resultado de la redirección de Google: ${error.code} - ${error.message}`);
-        toast({
-          variant: "destructive",
-          title: "Error de Google",
-          description: error.message,
-        });
+        await logToServer(`[¡ERROR en Google!] Fallo al obtener el resultado de la redirección: ${error.code} - ${error.message}`);
+        toast({ variant: "destructive", title: "Error de Autenticación", description: `Hubo un problema al verificar con Google: ${error.message}` });
         setIsGoogleLoading(false);
       });
-      return () => { isMounted = false; }
-  }, []);
-  
 
+      return () => { isMounted = false; }
+  }, [router, toast]);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -142,15 +132,18 @@ export default function RegisterPage() {
   });
 
   async function handleGoogleRegister() {
+    await logToServer('Iniciando el proceso de redirección con Google...');
     setIsGoogleLoading(true);
-    await logToServer('Iniciando el proceso de redirección de Google...');
     const provider = new GoogleAuthProvider();
-    await signInWithRedirect(auth, provider);
+    signInWithRedirect(auth, provider).catch(async (error) => {
+        await logToServer(`[¡ERROR!] Fallo al iniciar signInWithRedirect: ${error.message}`);
+        toast({ variant: 'destructive', title: 'Error', description: 'No se pudo iniciar el proceso con Google.' });
+        setIsGoogleLoading(false);
+    });
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-
     try {
         const requestData = {
             email: values.email.trim(),
@@ -161,22 +154,16 @@ export default function RegisterPage() {
             phone: values.phone,
             phonePrefix: '+51'
         };
-
       const response = await fetch('https://yopracticando.com/api/enviar_verificacion.php', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestData),
       });
-
       if (!response.ok) {
         const errorResult = await response.json().catch(() => null);
         throw new Error(errorResult?.message || `Error del servidor: ${response.status}`);
       }
-
       const result = await response.json();
-
       if (result.success) {
         toast({ title: "¡Registro Exitoso!", description: "Te hemos enviado un correo para verificar tu cuenta." });
         router.push(`/verify-account?email=${encodeURIComponent(values.email)}`);
@@ -191,7 +178,7 @@ export default function RegisterPage() {
       toast({
         variant: "destructive",
         title: "Error de Conexión",
-        description: error.message || "No se pudo conectar al servidor. Por favor, intenta de nuevo.",
+        description: error.message || "No se pudo conectar al servidor.",
       });
     } finally {
       setIsLoading(false);
@@ -202,7 +189,7 @@ export default function RegisterPage() {
     return (
      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
        <Loader2 className="h-16 w-16 animate-spin" />
-       <span className="ml-4 text-lg">Verificando con Google...</span>
+       <span className="ml-4 text-lg">Verificando...</span>
      </div>
    );
  }

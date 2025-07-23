@@ -49,7 +49,7 @@ export default function LoginPage() {
 
   const handleGoogleAuth = async (googleUser: FirebaseUser) => {
     await logToServer(`[Paso 2] Entrando a handleGoogleAuth con el usuario de Google: ${googleUser.email}`);
-    setIsGoogleLoading(true); // Redundant, but safe
+    setIsGoogleLoading(true);
     const body = {
       email: googleUser.email,
       fullName: googleUser.displayName,
@@ -271,5 +271,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    

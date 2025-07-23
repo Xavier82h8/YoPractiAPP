@@ -72,83 +72,78 @@ export default function ProfilePage() {
 
 
   useEffect(() => {
-    const processAuth = async () => {
-        setIsLoading(true);
-        try {
-            const result = await getRedirectResult(auth);
-            if (result) {
-                // User has just signed in via redirect.
-                const googleUser = result.user;
-                const body = {
-                    email: googleUser.email,
-                    fullName: googleUser.displayName,
-                    googleId: googleUser.uid,
-                };
-                
-                const response = await fetch('https://yopracticando.com/api/google-auth.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body),
-                });
-
-                const apiResult = await response.json();
-
-                if (apiResult.success && apiResult.usuario) {
-                    setupUserSession({ ...apiResult.usuario, email: body.email }, 'google');
-                } else {
-                    throw new Error(apiResult.message || 'La API de Google devolvió un error.');
-                }
-            } else {
-                // No redirect result, check for existing session in localStorage
-                const localUserId = localStorage.getItem('userId');
-                if (localUserId) {
-                    const profile: UserProfile = {
-                        id: localUserId,
-                        userType: localStorage.getItem('userType') || 'alumno',
-                        email: localStorage.getItem('userEmail') || '',
-                        fullName: localStorage.getItem('userFullName') || "Usuario",
-                        phone: localStorage.getItem('userPhone') || "",
-                        skills: localStorage.getItem('userSkills') || "",
-                        experience: localStorage.getItem('userExperience') || "",
-                        companyName: localStorage.getItem('userCompanyName') || (localStorage.getItem('userType') === 'empresa' ? (localStorage.getItem('userFullName') || '') : ''),
-                        companyDescription: localStorage.getItem('userCompanyDescription') || "",
-                        website: localStorage.getItem('userWebsite') || "",
-                        category: localStorage.getItem('userCategory') || "",
-                        foundedYear: localStorage.getItem('userFoundedYear') || "",
-                        companySize: localStorage.getItem('userCompanySize') || "",
-                        logo: localStorage.getItem('userLogo') || "",
-                        location: localStorage.getItem('userLocation') || "",
-                        address: localStorage.getItem('userAddress') || "",
-                    };
-                    setUserProfile(profile);
-                } else {
-                    // No user found, redirect to login
-                    toast({
-                        variant: "destructive",
-                        title: "Acceso Denegado",
-                        description: "Por favor, inicia sesión para continuar.",
-                    });
-                    router.push('/login');
-                    return; // Stop execution to avoid setting loading to false
-                }
-            }
-        } catch (error: any) {
-            toast({
-                variant: 'destructive',
-                title: 'Error de Autenticación',
-                description: `Error: ${error.message}. Code: ${error.code}`,
-            });
-            // Redirect to login even on error
-            if (router.pathname !== '/login') {
-                 router.push('/login');
-            }
-        } finally {
-            setIsLoading(false);
+    const handleAuthRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          // Si hay resultado, el usuario acaba de iniciar sesión/registrarse vía Google.
+          const googleUser = result.user;
+          const response = await fetch('https://yopracticando.com/api/google-auth.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: googleUser.email,
+              fullName: googleUser.displayName,
+              googleId: googleUser.uid,
+            }),
+          });
+          const apiResult = await response.json();
+          if (apiResult.success && apiResult.usuario) {
+            // Guardamos los datos del nuevo usuario en localStorage y el estado.
+            setupUserSession({ ...apiResult.usuario, email: googleUser.email }, 'google');
+          } else {
+            throw new Error(apiResult.message || 'La API de Google devolvió un error.');
+          }
         }
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Error de Autenticación',
+          description: error.message || 'No se pudo completar el inicio de sesión.',
+        });
+        // Si falla la autenticación, limpiamos y redirigimos a login
+        localStorage.clear();
+        router.push('/login');
+        return; // Detenemos la ejecución aquí.
+      }
+
+      // Haya habido redirección o no, ahora verificamos la sesión en localStorage
+      const localUserId = localStorage.getItem('userId');
+      if (localUserId) {
+        // Si ya hay un perfil cargado, evitamos recargarlo innecesariamente
+        if (!userProfile) {
+            const profile: UserProfile = {
+                id: localUserId,
+                userType: localStorage.getItem('userType') || 'alumno',
+                email: localStorage.getItem('userEmail') || '',
+                fullName: localStorage.getItem('userFullName') || "Usuario",
+                phone: localStorage.getItem('userPhone') || "",
+                skills: localStorage.getItem('userSkills') || "",
+                experience: localStorage.getItem('userExperience') || "",
+                companyName: localStorage.getItem('userCompanyName') || (localStorage.getItem('userType') === 'empresa' ? (localStorage.getItem('userFullName') || '') : ''),
+                companyDescription: localStorage.getItem('userCompanyDescription') || "",
+                website: localStorage.getItem('userWebsite') || "",
+                category: localStorage.getItem('userCategory') || "",
+                foundedYear: localStorage.getItem('userFoundedYear') || "",
+                companySize: localStorage.getItem('userCompanySize') || "",
+                logo: localStorage.getItem('userLogo') || "",
+                location: localStorage.getItem('userLocation') || "",
+                address: localStorage.getItem('userAddress') || "",
+            };
+            setUserProfile(profile);
+        }
+      } else {
+        // Si después de todo no hay ID, no hay sesión válida.
+        router.push('/login');
+        return;
+      }
+      
+      setIsLoading(false);
     };
 
-    processAuth();
-}, [router, toast]);
+    handleAuthRedirect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   if (isLoading) {
@@ -160,8 +155,7 @@ export default function ProfilePage() {
   }
   
   if (!userProfile) {
-    // This case can be hit if the user is redirected to login.
-    // Showing a loader is a good fallback.
+    // Esto se muestra brevemente mientras se redirige a /login si no hay sesión.
      return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
         <Loader2 className="h-16 w-16 animate-spin" />

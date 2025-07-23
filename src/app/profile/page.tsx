@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AlumnoProfile from "@/components/profile-alumno";
 import EmpresaProfile from "@/components/profile-empresa";
-import { getRedirectResult, GoogleAuthProvider } from "firebase/auth";
+import { getRedirectResult } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 
@@ -35,24 +35,34 @@ export default function ProfilePage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const handleSuccessfulLogin = (userData: any) => {
-    localStorage.setItem('userId', String(userData.id));
-    localStorage.setItem('userEmail', userData.email || '');
-    localStorage.setItem('userFullName', userData.fullName || 'Usuario');
-    localStorage.setItem('userType', userData.tipo_usuario);
-    if (userData.token) localStorage.setItem('userToken', userData.token);
+  const handleSuccessfulLogin = (userData: any, source: 'google' | 'local' = 'local') => {
+    const profile = {
+      id: String(userData.id),
+      email: userData.email || '',
+      fullName: userData.fullName || 'Usuario',
+      userType: userData.tipo_usuario || userData.userType,
+    }
+    
+    localStorage.setItem('userId', profile.id);
+    localStorage.setItem('userEmail', profile.email);
+    localStorage.setItem('userFullName', profile.fullName);
+    localStorage.setItem('userType', profile.userType);
     
     window.dispatchEvent(new Event("storage"));
-    
-    toast({ title: "¡Éxito!", description: "Inicio de sesión exitoso." });
+
+    if (source === 'google') {
+        toast({ title: "¡Éxito!", description: "Inicio de sesión con Google exitoso." });
+    }
   };
 
   useEffect(() => {
-    const processRedirectResult = async () => {
+    const processAuth = async () => {
       try {
         const result = await getRedirectResult(auth);
+        
         if (result) {
-          // Usuario ha regresado de la redirección de Google
+          // --- Proceso de redirección de Google ---
+          setIsLoading(true);
           const googleUser = result.user;
           const body = {
             email: googleUser.email,
@@ -69,18 +79,9 @@ export default function ProfilePage() {
           const apiResult = await response.json();
 
           if (apiResult.success && apiResult.usuario) {
-            handleSuccessfulLogin({ ...apiResult.usuario, email: body.email });
-            // Cargar perfil inmediatamente
-            const profile: UserProfile = {
-              id: apiResult.usuario.id,
-              userType: apiResult.usuario.tipo_usuario,
-              email: apiResult.usuario.email || '',
-              fullName: apiResult.usuario.fullName || 'Usuario',
-              phone: '',
-              skills: '',
-              experience: '',
-            };
-            setUserProfile(profile);
+            handleSuccessfulLogin({ ...apiResult.usuario, email: body.email }, 'google');
+            // Cargar el perfil inmediatamente después de un inicio de sesión exitoso con Google
+            // El resto del perfil se cargará desde el localStorage abajo
           } else {
             throw new Error(apiResult.message || 'La API de Google devolvió un error.');
           }
@@ -88,52 +89,52 @@ export default function ProfilePage() {
       } catch (error: any) {
         toast({
           variant: 'destructive',
-          title: 'Error de Google',
-          description: error.message || 'No se pudo completar el inicio de sesión con Google.',
+          title: 'Error de Autenticación',
+          description: error.message || 'No se pudo completar el inicio de sesión.',
         });
-        // Si hay error, intentar cargar desde localStorage o redirigir
-        const userId = localStorage.getItem('userId');
-        if (!userId) {
-          router.push('/login');
-        }
-      } finally {
-        // Una vez procesado el resultado (o si no había ninguno), cargar desde localStorage
-        if (!userProfile) {
-            const userId = localStorage.getItem('userId');
-            const userType = localStorage.getItem('userType');
-
-            if (!userId || !userType) {
-                router.push('/login');
-                return;
-            }
-            
-            const profile: UserProfile = {
-                id: userId,
-                userType: userType,
-                email: localStorage.getItem('userEmail') || '',
-                fullName: localStorage.getItem('userFullName') || "Usuario",
-                phone: localStorage.getItem('userPhone') || "",
-                skills: localStorage.getItem('userSkills') || "",
-                experience: localStorage.getItem('userExperience') || "",
-                companyName: localStorage.getItem('userCompanyName') || (userType === 'empresa' ? (localStorage.getItem('userFullName') || '') : ''),
-                companyDescription: localStorage.getItem('userCompanyDescription') || "",
-                website: localStorage.getItem('userWebsite') || "",
-                category: localStorage.getItem('userCategory') || "",
-                foundedYear: localStorage.getItem('userFoundedYear') || "",
-                companySize: localStorage.getItem('userCompanySize') || "",
-                logo: localStorage.getItem('userLogo') || "",
-                location: localStorage.getItem('userLocation') || "",
-                address: localStorage.getItem('userAddress') || "",
-            };
-
-            setUserProfile(profile);
-        }
-        setIsLoading(false);
+        // Si hay un error, es posible que el usuario deba iniciar sesión de nuevo
+        router.push('/login');
+        return; // Detener la ejecución si la autenticación falla
       }
+
+      // --- Cargar desde LocalStorage ---
+      // Esto se ejecutará siempre, después de intentar procesar la redirección
+      const localUserId = localStorage.getItem('userId');
+      if (localUserId) {
+        const profile: UserProfile = {
+            id: localUserId,
+            userType: localStorage.getItem('userType') || 'alumno',
+            email: localStorage.getItem('userEmail') || '',
+            fullName: localStorage.getItem('userFullName') || "Usuario",
+            phone: localStorage.getItem('userPhone') || "",
+            skills: localStorage.getItem('userSkills') || "",
+            experience: localStorage.getItem('userExperience') || "",
+            companyName: localStorage.getItem('userCompanyName') || (localStorage.getItem('userType') === 'empresa' ? (localStorage.getItem('userFullName') || '') : ''),
+            companyDescription: localStorage.getItem('userCompanyDescription') || "",
+            website: localStorage.getItem('userWebsite') || "",
+            category: localStorage.getItem('userCategory') || "",
+            foundedYear: localStorage.getItem('userFoundedYear') || "",
+            companySize: localStorage.getItem('userCompanySize') || "",
+            logo: localStorage.getItem('userLogo') || "",
+            location: localStorage.getItem('userLocation') || "",
+            address: localStorage.getItem('userAddress') || "",
+        };
+        setUserProfile(profile);
+      } else {
+        // Si no hay redirección y no hay usuario en localStorage, redirigir a login
+        toast({
+            variant: "destructive",
+            title: "Acceso Denegado",
+            description: "Por favor, inicia sesión para continuar.",
+        });
+        router.push('/login');
+        return;
+      }
+      setIsLoading(false);
     };
 
-    processRedirectResult();
-  }, [router, toast, userProfile]);
+    processAuth();
+  }, [router, toast]);
 
   if (isLoading || !userProfile) {
     return (
@@ -153,7 +154,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
-      <p>Tipo de usuario no reconocido.</p>
+      <p>Tipo de usuario no reconocido. Por favor, contacta a soporte.</p>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from "react";
-import { GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth";
+import { useState } from "react";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -40,7 +40,7 @@ export default function RegisterPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(true); // Start as true
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const handleSuccessfulLogin = (userData: any) => {
     localStorage.setItem('userId', String(userData.id));
@@ -55,52 +55,6 @@ export default function RegisterPage() {
     router.push("/profile");
     router.refresh();
   };
-  
-  useEffect(() => {
-    let isMounted = true;
-    
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (!isMounted) return;
-
-        if (result) {
-          const googleUser = result.user;
-          const body = {
-            email: googleUser.email,
-            fullName: googleUser.displayName,
-            googleId: googleUser.uid,
-          };
-          
-          try {
-            const response = await fetch('https://yopracticando.com/api/google-auth.php', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
-            });
-
-            const apiResult = await response.json();
-
-            if (apiResult.success && apiResult.usuario) {
-              handleSuccessfulLogin({ ...apiResult.usuario, email: body.email });
-            } else {
-              throw new Error(apiResult.message || 'La API de Google devolvió un error.');
-            }
-          } catch (error: any) {
-            toast({ variant: "destructive", title: "Error de Servidor", description: error.message });
-            setIsGoogleLoading(false);
-          }
-        } else {
-          setIsGoogleLoading(false);
-        }
-      })
-      .catch((error) => {
-        if (!isMounted) return;
-        toast({ variant: "destructive", title: "Error de Google Auth", description: `Hubo un problema al verificar con Google: ${error.message}` });
-        setIsGoogleLoading(false);
-      });
-
-      return () => { isMounted = false; }
-  }, [router, toast]);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -117,9 +71,37 @@ export default function RegisterPage() {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-        await signInWithRedirect(auth, provider);
-    } catch (error) {
-        toast({ variant: 'destructive', title: 'Error', description: 'No se pudo iniciar el proceso con Google.' });
+      const result = await signInWithPopup(auth, provider);
+      const googleUser = result.user;
+
+      const body = {
+        email: googleUser.email,
+        fullName: googleUser.displayName,
+        googleId: googleUser.uid,
+      };
+      
+      const response = await fetch('https://yopracticando.com/api/google-auth.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const apiResult = await response.json();
+
+      if (apiResult.success && apiResult.usuario) {
+        handleSuccessfulLogin({ ...apiResult.usuario, email: body.email });
+      } else {
+        throw new Error(apiResult.message || 'La API de Google devolvió un error.');
+      }
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error de Google',
+        description: error.code === 'auth/popup-closed-by-user' 
+            ? 'El proceso fue cancelado.' 
+            : error.message || 'No se pudo registrar con Google.',
+      });
+    } finally {
         setIsGoogleLoading(false);
     }
   }
@@ -167,15 +149,6 @@ export default function RegisterPage() {
     }
   }
   
-  if (isGoogleLoading) {
-    return (
-     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
-       <Loader2 className="h-16 w-16 animate-spin" />
-       <span className="ml-4 text-lg">Verificando con Google...</span>
-     </div>
-   );
- }
-
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
       <Card className="w-full max-w-lg shadow-2xl">
@@ -305,7 +278,7 @@ export default function RegisterPage() {
             </div>
           </div>
            <Button variant="outline" className="w-full" onClick={handleGoogleRegister} disabled={isLoading || isGoogleLoading}>
-            {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon className="mr-2" />}
             Google
           </Button>
           <p className="mt-4 text-center text-sm">
@@ -319,5 +292,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
-    

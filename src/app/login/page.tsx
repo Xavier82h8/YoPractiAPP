@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from "react";
-import { getRedirectResult, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import { useState } from "react";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -33,7 +33,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(true); // Start as true to handle initial check
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const handleSuccessfulLogin = (userData: any) => {
     localStorage.setItem('userId', String(userData.id));
@@ -48,56 +48,7 @@ export default function LoginPage() {
     router.push("/profile");
     router.refresh();
   };
-
-
-  useEffect(() => {
-    let isMounted = true;
-    
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (!isMounted) return;
-
-        if (result) {
-          // User has just returned from Google sign-in
-          const googleUser = result.user;
-          const body = {
-            email: googleUser.email,
-            fullName: googleUser.displayName,
-            googleId: googleUser.uid,
-          };
-          
-          try {
-            const response = await fetch('https://yopracticando.com/api/google-auth.php', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
-            });
-
-            const apiResult = await response.json();
-
-            if (apiResult.success && apiResult.usuario) {
-              handleSuccessfulLogin({ ...apiResult.usuario, email: body.email });
-            } else {
-              throw new Error(apiResult.message || 'La API de Google devolvió un error.');
-            }
-          } catch (error: any) {
-            toast({ variant: "destructive", title: "Error del Servidor", description: error.message });
-            setIsGoogleLoading(false);
-          }
-        } else {
-          // No redirect result, probably a normal page load
-          setIsGoogleLoading(false);
-        }
-      })
-      .catch((error) => {
-        if (!isMounted) return;
-        toast({ variant: "destructive", title: "Error de Google Auth", description: `Hubo un problema al verificar con Google: ${error.message}` });
-        setIsGoogleLoading(false);
-      });
-
-      return () => { isMounted = false; }
-  }, [router, toast]);
-
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { email: "", password: "" },
@@ -106,10 +57,41 @@ export default function LoginPage() {
   async function handleGoogleLogin() {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
-    signInWithRedirect(auth, provider).catch((error) => {
-        toast({ variant: 'destructive', title: 'Error', description: 'No se pudo iniciar el proceso con Google.' });
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const googleUser = result.user;
+
+      const body = {
+        email: googleUser.email,
+        fullName: googleUser.displayName,
+        googleId: googleUser.uid,
+      };
+      
+      const response = await fetch('https://yopracticando.com/api/google-auth.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const apiResult = await response.json();
+
+      if (apiResult.success && apiResult.usuario) {
+        handleSuccessfulLogin({ ...apiResult.usuario, email: body.email });
+      } else {
+        throw new Error(apiResult.message || 'La API de Google devolvió un error.');
+      }
+
+    } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Error de Google',
+          description: error.code === 'auth/popup-closed-by-user' 
+              ? 'El proceso fue cancelado.' 
+              : error.message || 'No se pudo iniciar sesión con Google.',
+        });
+    } finally {
         setIsGoogleLoading(false);
-    });
+    }
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -155,15 +137,6 @@ export default function LoginPage() {
     }
   }
 
-  if (isGoogleLoading) {
-     return (
-      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
-        <Loader2 className="h-16 w-16 animate-spin" />
-        <span className="ml-4 text-lg">Verificando con Google...</span>
-      </div>
-    );
-  }
-
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-2xl">
@@ -181,7 +154,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Correo Electrónico</FormLabel>
                     <FormControl>
-                      <Input placeholder="nombre@ejemplo.com" {...field} disabled={isLoading} />
+                      <Input placeholder="nombre@ejemplo.com" {...field} disabled={isLoading || isGoogleLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -194,7 +167,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Contraseña</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} disabled={isLoading}/>
+                      <Input type="password" placeholder="••••••••" {...field} disabled={isLoading || isGoogleLoading}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -217,7 +190,7 @@ export default function LoginPage() {
             </div>
           </div>
           <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading || isGoogleLoading}>
-            {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon className="mr-2"/>}
             Google
           </Button>
         </CardContent>
@@ -236,5 +209,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    

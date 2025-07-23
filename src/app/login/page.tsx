@@ -55,8 +55,13 @@ export default function LoginPage() {
   });
 
   async function handleGoogleLogin() {
+    if (isGoogleLoading) return;
     setIsGoogleLoading(true);
+    
     const provider = new GoogleAuthProvider();
+    provider.addScope('profile');
+    provider.addScope('email');
+
     try {
       const result = await signInWithPopup(auth, provider);
       const googleUser = result.user;

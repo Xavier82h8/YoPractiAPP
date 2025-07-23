@@ -42,6 +42,7 @@ try {
         // --- Usuario ya existe ---
         $userId = $usuario['id'];
         
+        // Si el usuario existe pero no tiene google_id, o no está verificado, lo actualizamos.
         if (empty($usuario['google_id']) || $usuario['verificado'] != 1) {
             $updateQuery = "UPDATE registro_usuarios SET google_id = ?, verificado = 1 WHERE id = ?";
             $updateStmt = $conexion->prepare($updateQuery);

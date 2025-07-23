@@ -1,6 +1,15 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
+// Permitir solicitudes desde dominios específicos
+$allowed_origins = [
+    "https://yopracticando.com",
+    "https://6000-firebase-studio-1753212561189.cluster-aj77uug3sjd4iut4ev6a4jbtf2.cloudworkstations.dev"
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowed_origins)) {
+    header("Access-Control-Allow-Origin: " . $origin);
+}
+
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json");
 

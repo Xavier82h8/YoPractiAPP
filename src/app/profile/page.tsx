@@ -56,13 +56,14 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
+    // La función principal ahora se centra en procesar la redirección y luego cargar el perfil
     const processAuth = async () => {
+      setIsLoading(true);
       try {
         const result = await getRedirectResult(auth);
         
         if (result) {
-          // --- Proceso de redirección de Google ---
-          setIsLoading(true);
+          // 1. Si hay un resultado de redirección, lo procesamos
           const googleUser = result.user;
           const body = {
             email: googleUser.email,
@@ -80,8 +81,7 @@ export default function ProfilePage() {
 
           if (apiResult.success && apiResult.usuario) {
             handleSuccessfulLogin({ ...apiResult.usuario, email: body.email }, 'google');
-            // Cargar el perfil inmediatamente después de un inicio de sesión exitoso con Google
-            // El resto del perfil se cargará desde el localStorage abajo
+            // La información del usuario ya está en localStorage, podemos continuar para cargarla
           } else {
             throw new Error(apiResult.message || 'La API de Google devolvió un error.');
           }
@@ -92,13 +92,11 @@ export default function ProfilePage() {
           title: 'Error de Autenticación',
           description: error.message || 'No se pudo completar el inicio de sesión.',
         });
-        // Si hay un error, es posible que el usuario deba iniciar sesión de nuevo
         router.push('/login');
-        return; // Detener la ejecución si la autenticación falla
+        return;
       }
 
-      // --- Cargar desde LocalStorage ---
-      // Esto se ejecutará siempre, después de intentar procesar la redirección
+      // 2. Después de procesar (o no) la redirección, cargamos el perfil desde localStorage
       const localUserId = localStorage.getItem('userId');
       if (localUserId) {
         const profile: UserProfile = {
@@ -121,7 +119,7 @@ export default function ProfilePage() {
         };
         setUserProfile(profile);
       } else {
-        // Si no hay redirección y no hay usuario en localStorage, redirigir a login
+        // Si no hay usuario en localStorage después de todo, redirigir a login
         toast({
             variant: "destructive",
             title: "Acceso Denegado",

@@ -336,7 +336,6 @@ export default function RegisterPage() {
             </div>
           </div>
            <Button variant="outline" className="w-full" onClick={handleGoogleRegister} disabled={isGoogleLoading}>
-            {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             <GoogleIcon className="mr-2" />
             Google
           </Button>
@@ -351,3 +350,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+    

@@ -7,7 +7,7 @@ import { getAuth } from "firebase/auth";
 const firebaseConfig = {
   "projectId": "yopracticando-36seb",
   "appId": "1:634933837473:web:0b76c4502219798642bae0",
-  "storageBucket": "yopracticando-36seb.appspot.com",
+  "storageBucket": "yopracticando-36seb.firebasestorage.app",
   "apiKey": "AIzaSyAGPUVrINy_j1g-_Um1xZ21GODtfe9NtkY",
   "authDomain": "yopracticando-36seb.firebaseapp.com",
   "messagingSenderId": "634933837473"

@@ -44,9 +44,9 @@ const internships = [
 
 export default function Home() {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col bg-background text-foreground">
        <LoginBanner />
-      <section className="py-20 md:py-32 bg-secondary/30">
+      <section className="py-20 md:py-32">
         <div className="container mx-auto text-center">
           <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tighter mb-4">
             El Futuro del Talento Comienza Aquí
@@ -89,7 +89,7 @@ export default function Home() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
             {internships.map((internship, index) => (
-              <Card key={index} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row group">
+              <Card key={index} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row group bg-card">
                  <div className="md:w-2/5 relative overflow-hidden">
                    <Image
                       src={internship.image}
@@ -100,23 +100,23 @@ export default function Home() {
                       className="object-cover h-full w-full transform transition-transform duration-500 group-hover:scale-110"
                     />
                 </div>
-                <div className="md:w-3/5 flex flex-col">
-                  <CardHeader>
+                <div className="md:w-3/5 flex flex-col p-6">
+                  <CardHeader className="p-0 mb-4">
                     <div className="flex items-start justify-between">
                         <div>
                             <CardTitle className="font-headline text-2xl group-hover:text-primary transition-colors duration-300">{internship.title}</CardTitle>
-                            <CardDescription className="text-lg">{internship.company}</CardDescription>
+                            <CardDescription className="text-lg text-muted-foreground">{internship.company}</CardDescription>
                         </div>
                         {internship.icon}
                     </div>
                   </CardHeader>
-                  <CardContent className="flex-grow">
+                  <CardContent className="flex-grow p-0">
                     <div className="flex items-center text-muted-foreground">
                       <MapPin className="h-4 w-4 mr-2" />
                       <span>{internship.location}</span>
                     </div>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter className="p-0 mt-4">
                     <Button className="w-full">Ver Detalles</Button>
                   </CardFooter>
                 </div>

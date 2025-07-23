@@ -47,18 +47,23 @@ export function AuthNav() {
   }, []);
 
   const handleLogout = () => {
-    // Clear user data from localStorage
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userType');
-    localStorage.removeItem('userToken');
-    localStorage.removeItem('userFullName');
+    // Clear all user data from localStorage
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('user')) {
+            localStorage.removeItem(key);
+        }
+    });
     
     // Update state and notify user
     setUser(null);
     toast({ title: 'Éxito', description: 'Sesión cerrada correctamente.' });
+    
+    // Dispatch storage event to notify other tabs
+    window.dispatchEvent(new Event("storage"));
+
+    // Redirect and refresh
     router.push('/');
-    router.refresh(); // Force a refresh to update server-side rendered components if any
+    router.refresh();
   };
 
   if (!user) {
@@ -81,7 +86,7 @@ export function AuthNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
            <Avatar className="h-9 w-9">
-              <AvatarImage src={`https://ui-avatars.com/api/?name=${user.fullName.replace(' ','+')}&background=random`} alt={user.fullName} />
+              <AvatarImage src={`https://ui-avatars.com/api/?name=${user.fullName.replace(/\s/g, '+')}&background=random`} alt={user.fullName} />
               <AvatarFallback>{userInitial}</AvatarFallback>
             </Avatar>
         </Button>
@@ -111,3 +116,5 @@ export function AuthNav() {
     </DropdownMenu>
   );
 }
+
+    

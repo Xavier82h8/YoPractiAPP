@@ -40,7 +40,21 @@ export default function RegisterPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(true);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(true); // Start as true
+
+  const handleSuccessfulLogin = (userData: any) => {
+    localStorage.setItem('userId', String(userData.id));
+    localStorage.setItem('userEmail', userData.email || '');
+    localStorage.setItem('userFullName', userData.fullName || 'Usuario');
+    localStorage.setItem('userType', userData.tipo_usuario);
+    if (userData.token) localStorage.setItem('userToken', userData.token);
+    
+    window.dispatchEvent(new Event("storage"));
+    
+    toast({ title: "¡Éxito!", description: "Registro y inicio de sesión exitosos." });
+    router.push("/profile");
+    router.refresh();
+  };
   
   useEffect(() => {
     let isMounted = true;
@@ -67,15 +81,9 @@ export default function RegisterPage() {
             const apiResult = await response.json();
 
             if (apiResult.success && apiResult.usuario) {
-              localStorage.setItem('userId', String(apiResult.usuario.id));
-              localStorage.setItem('userEmail', apiResult.usuario.email || '');
-              localStorage.setItem('userFullName', apiResult.usuario.fullName || 'Usuario');
-              localStorage.setItem('userType', apiResult.usuario.tipo_usuario);
-              window.dispatchEvent(new Event("storage"));
-              toast({ title: "¡Éxito!", description: "Registro con Google exitoso." });
-              router.push("/profile");
+              handleSuccessfulLogin({ ...apiResult.usuario, email: body.email });
             } else {
-              throw new Error(apiResult.message || 'La API devolvió un error inesperado.');
+              throw new Error(apiResult.message || 'La API de Google devolvió un error.');
             }
           } catch (error: any) {
             toast({ variant: "destructive", title: "Error de Servidor", description: error.message });
@@ -85,9 +93,9 @@ export default function RegisterPage() {
           setIsGoogleLoading(false);
         }
       })
-      .catch(async (error) => {
+      .catch((error) => {
         if (!isMounted) return;
-        toast({ variant: "destructive", title: "Error de Autenticación", description: `Hubo un problema al verificar con Google: ${error.message}` });
+        toast({ variant: "destructive", title: "Error de Google Auth", description: `Hubo un problema al verificar con Google: ${error.message}` });
         setIsGoogleLoading(false);
       });
 
@@ -297,7 +305,7 @@ export default function RegisterPage() {
             </div>
           </div>
            <Button variant="outline" className="w-full" onClick={handleGoogleRegister} disabled={isLoading || isGoogleLoading}>
-            <GoogleIcon className="mr-2" />
+            {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Google
           </Button>
           <p className="mt-4 text-center text-sm">
@@ -311,3 +319,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+    

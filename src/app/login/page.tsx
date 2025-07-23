@@ -33,7 +33,22 @@ export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(true);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(true); // Start as true to handle initial check
+
+  const handleSuccessfulLogin = (userData: any) => {
+    localStorage.setItem('userId', String(userData.id));
+    localStorage.setItem('userEmail', userData.email || '');
+    localStorage.setItem('userFullName', userData.fullName || 'Usuario');
+    localStorage.setItem('userType', userData.tipo_usuario);
+    if (userData.token) localStorage.setItem('userToken', userData.token);
+    
+    window.dispatchEvent(new Event("storage"));
+    
+    toast({ title: "¡Éxito!", description: "Inicio de sesión exitoso." });
+    router.push("/profile");
+    router.refresh();
+  };
+
 
   useEffect(() => {
     let isMounted = true;
@@ -43,6 +58,7 @@ export default function LoginPage() {
         if (!isMounted) return;
 
         if (result) {
+          // User has just returned from Google sign-in
           const googleUser = result.user;
           const body = {
             email: googleUser.email,
@@ -60,27 +76,22 @@ export default function LoginPage() {
             const apiResult = await response.json();
 
             if (apiResult.success && apiResult.usuario) {
-              localStorage.setItem('userId', String(apiResult.usuario.id));
-              localStorage.setItem('userEmail', apiResult.usuario.email || '');
-              localStorage.setItem('userFullName', apiResult.usuario.fullName || 'Usuario');
-              localStorage.setItem('userType', apiResult.usuario.tipo_usuario);
-              window.dispatchEvent(new Event("storage"));
-              toast({ title: "¡Éxito!", description: "Inicio de sesión con Google exitoso." });
-              router.push("/profile");
+              handleSuccessfulLogin({ ...apiResult.usuario, email: body.email });
             } else {
-              throw new Error(apiResult.message || 'La API devolvió un error inesperado.');
+              throw new Error(apiResult.message || 'La API de Google devolvió un error.');
             }
           } catch (error: any) {
-            toast({ variant: "destructive", title: "Error de Servidor", description: error.message });
+            toast({ variant: "destructive", title: "Error del Servidor", description: error.message });
             setIsGoogleLoading(false);
           }
         } else {
+          // No redirect result, probably a normal page load
           setIsGoogleLoading(false);
         }
       })
-      .catch(async (error) => {
+      .catch((error) => {
         if (!isMounted) return;
-        toast({ variant: "destructive", title: "Error de Autenticación", description: `Hubo un problema al verificar con Google: ${error.message}` });
+        toast({ variant: "destructive", title: "Error de Google Auth", description: `Hubo un problema al verificar con Google: ${error.message}` });
         setIsGoogleLoading(false);
       });
 
@@ -95,7 +106,7 @@ export default function LoginPage() {
   async function handleGoogleLogin() {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
-    signInWithRedirect(auth, provider).catch(async (error) => {
+    signInWithRedirect(auth, provider).catch((error) => {
         toast({ variant: 'destructive', title: 'Error', description: 'No se pudo iniciar el proceso con Google.' });
         setIsGoogleLoading(false);
     });
@@ -121,18 +132,11 @@ export default function LoginPage() {
       const result = await response.json();
 
       if (result.success && result.usuario) {
-        localStorage.setItem('userId', String(result.usuario.id));
-        localStorage.setItem('userEmail', values.email.trim());
-        localStorage.setItem('userType', result.usuario.tipo_usuario);
-        if (result.token) localStorage.setItem('userToken', result.token);
-        
-        const fullName = result.usuario.nombre_usuario || result.usuario.nombre_empresa || 'Usuario';
-        localStorage.setItem('userFullName', fullName);
-        
-        window.dispatchEvent(new Event("storage"));
-        
-        toast({ title: "¡Éxito!", description: "Inicio de sesión exitoso." });
-        router.push("/profile");
+         handleSuccessfulLogin({
+          ...result.usuario,
+          email: values.email.trim(),
+          fullName: result.usuario.nombre_usuario || result.usuario.nombre_empresa || 'Usuario'
+        });
       } else {
         toast({
           variant: "destructive",
@@ -213,7 +217,7 @@ export default function LoginPage() {
             </div>
           </div>
           <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading || isGoogleLoading}>
-            <GoogleIcon className="mr-2" />
+            {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Google
           </Button>
         </CardContent>
@@ -232,3 +236,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

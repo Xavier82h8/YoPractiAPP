@@ -4,7 +4,6 @@ header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json");
 
-// Handle preflight OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
@@ -15,7 +14,6 @@ $data = json_decode(file_get_contents("php://input"), true);
 
 $id = $data['id'] ?? null;
 
-// El ID es el único campo estrictamente requerido
 if (!$id) {
     echo json_encode([
         "success" => false,
@@ -24,39 +22,42 @@ if (!$id) {
     exit;
 }
 
-// Mapeo de campos del frontend a columnas de la BD 'registro_usuarios'
 $allowedFields = [
     'email' => 'email',
     'phone' => 'telefono',
-    'fullName' => 'nombre_usuario', // Para alumnos
-    'companyName' => 'nombre_empresa', // Para empresas
-    'skills' => 'habilidades'
+    'fullName' => 'nombre_usuario',
+    'companyName' => 'nombre_empresa',
+    'skills' => 'habilidades',
+    'website' => 'website',
+    'companyDescription' => 'descripcion_empresa',
+    'category' => 'categoria',
+    'foundedYear' => 'ano_fundacion',
+    'companySize' => 'tamano_empresa',
+    'location' => 'ubicacion',
+    'address' => 'direccion'
 ];
 
 $fieldsToUpdate = [];
 $params = [];
 $types = '';
 
-// Si se envía 'companyName', también actualizamos 'nombre_usuario' para consistencia.
 if (isset($data['companyName']) && !isset($data['fullName'])) {
     $data['fullName'] = $data['companyName'];
 }
 
-
 foreach ($allowedFields as $jsonKey => $dbColumn) {
     if (isset($data[$jsonKey])) {
-        // Asegurarse de que el campo no esté vacío si se envía
-        if($data[$jsonKey] !== '' && $data[$jsonKey] !== null) {
+        if ($data[$jsonKey] !== '' && $data[$jsonKey] !== null) {
             $fieldsToUpdate[] = "{$dbColumn} = ?";
             $params[] = $data[$jsonKey];
-            $types .= 's'; // 's' for string
+            $types .= 's';
         }
     }
 }
 
 if (empty($fieldsToUpdate)) {
     echo json_encode([
-        "success" => true, // No es un error, simplemente no había nada que cambiar
+        "success" => true,
         "message" => "No se proporcionaron campos para actualizar."
     ]);
     exit;
@@ -69,7 +70,7 @@ try {
     }
 
     $query = "UPDATE registro_usuarios SET " . implode(', ', $fieldsToUpdate) . " WHERE id = ?";
-    $types .= 'i'; // 'i' for integer (user ID)
+    $types .= 'i';
     $params[] = $id;
 
     $stmt = $conexion->prepare($query);
@@ -77,7 +78,6 @@ try {
         throw new Exception("Error al preparar la consulta: " . $conexion->error);
     }
     
-    // bind_param necesita referencias, así que creamos un array de ellas
     $stmt->bind_param($types, ...$params);
 
     if ($stmt->execute()) {

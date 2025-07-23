@@ -35,7 +35,7 @@ export default function ProfilePage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Function to save user data to localStorage and state
+  // Mueve la función de login exitoso fuera del useEffect para que sea reutilizable
   const setupUserSession = (userData: any, source: 'google' | 'local' = 'local') => {
     const profile: UserProfile = {
       id: String(userData.id),
@@ -69,12 +69,13 @@ export default function ProfilePage() {
     
     setUserProfile(profile);
   };
-
-
+  
   useEffect(() => {
     const handleAuthRedirect = async () => {
+      setIsLoading(true);
       try {
         const result = await getRedirectResult(auth);
+        
         if (result) {
           // Si hay resultado, el usuario acaba de iniciar sesión/registrarse vía Google.
           const googleUser = result.user;
@@ -87,10 +88,12 @@ export default function ProfilePage() {
               googleId: googleUser.uid,
             }),
           });
+
           const apiResult = await response.json();
           if (apiResult.success && apiResult.usuario) {
             // Guardamos los datos del nuevo usuario en localStorage y el estado.
             setupUserSession({ ...apiResult.usuario, email: googleUser.email }, 'google');
+            // No necesitamos hacer más nada aquí, la carga del perfil ocurrirá después
           } else {
             throw new Error(apiResult.message || 'La API de Google devolvió un error.');
           }
@@ -110,28 +113,25 @@ export default function ProfilePage() {
       // Haya habido redirección o no, ahora verificamos la sesión en localStorage
       const localUserId = localStorage.getItem('userId');
       if (localUserId) {
-        // Si ya hay un perfil cargado, evitamos recargarlo innecesariamente
-        if (!userProfile) {
-            const profile: UserProfile = {
-                id: localUserId,
-                userType: localStorage.getItem('userType') || 'alumno',
-                email: localStorage.getItem('userEmail') || '',
-                fullName: localStorage.getItem('userFullName') || "Usuario",
-                phone: localStorage.getItem('userPhone') || "",
-                skills: localStorage.getItem('userSkills') || "",
-                experience: localStorage.getItem('userExperience') || "",
-                companyName: localStorage.getItem('userCompanyName') || (localStorage.getItem('userType') === 'empresa' ? (localStorage.getItem('userFullName') || '') : ''),
-                companyDescription: localStorage.getItem('userCompanyDescription') || "",
-                website: localStorage.getItem('userWebsite') || "",
-                category: localStorage.getItem('userCategory') || "",
-                foundedYear: localStorage.getItem('userFoundedYear') || "",
-                companySize: localStorage.getItem('userCompanySize') || "",
-                logo: localStorage.getItem('userLogo') || "",
-                location: localStorage.getItem('userLocation') || "",
-                address: localStorage.getItem('userAddress') || "",
-            };
-            setUserProfile(profile);
-        }
+          const profile: UserProfile = {
+              id: localUserId,
+              userType: localStorage.getItem('userType') || 'alumno',
+              email: localStorage.getItem('userEmail') || '',
+              fullName: localStorage.getItem('userFullName') || "Usuario",
+              phone: localStorage.getItem('userPhone') || "",
+              skills: localStorage.getItem('userSkills') || "",
+              experience: localStorage.getItem('userExperience') || "",
+              companyName: localStorage.getItem('userCompanyName') || (localStorage.getItem('userType') === 'empresa' ? (localStorage.getItem('userFullName') || '') : ''),
+              companyDescription: localStorage.getItem('userCompanyDescription') || "",
+              website: localStorage.getItem('userWebsite') || "",
+              category: localStorage.getItem('userCategory') || "",
+              foundedYear: localStorage.getItem('userFoundedYear') || "",
+              companySize: localStorage.getItem('userCompanySize') || "",
+              logo: localStorage.getItem('userLogo') || "",
+              location: localStorage.getItem('userLocation') || "",
+              address: localStorage.getItem('userAddress') || "",
+          };
+          setUserProfile(profile);
       } else {
         // Si después de todo no hay ID, no hay sesión válida.
         router.push('/login');

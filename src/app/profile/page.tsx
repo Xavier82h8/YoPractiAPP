@@ -91,9 +91,7 @@ export default function ProfilePage() {
 
           const apiResult = await response.json();
           if (apiResult.success && apiResult.usuario) {
-            // Guardamos los datos del nuevo usuario en localStorage y el estado.
             setupUserSession({ ...apiResult.usuario, email: googleUser.email }, 'google');
-            // No necesitamos hacer más nada aquí, la carga del perfil ocurrirá después
           } else {
             throw new Error(apiResult.message || 'La API de Google devolvió un error.');
           }
@@ -104,13 +102,11 @@ export default function ProfilePage() {
           title: 'Error de Autenticación',
           description: error.message || 'No se pudo completar el inicio de sesión.',
         });
-        // Si falla la autenticación, limpiamos y redirigimos a login
         localStorage.clear();
         router.push('/login');
-        return; // Detenemos la ejecución aquí.
+        return;
       }
 
-      // Haya habido redirección o no, ahora verificamos la sesión en localStorage
       const localUserId = localStorage.getItem('userId');
       if (localUserId) {
           const profile: UserProfile = {
@@ -133,7 +129,6 @@ export default function ProfilePage() {
           };
           setUserProfile(profile);
       } else {
-        // Si después de todo no hay ID, no hay sesión válida.
         router.push('/login');
         return;
       }
@@ -155,7 +150,6 @@ export default function ProfilePage() {
   }
   
   if (!userProfile) {
-    // Esto se muestra brevemente mientras se redirige a /login si no hay sesión.
      return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
         <Loader2 className="h-16 w-16 animate-spin" />

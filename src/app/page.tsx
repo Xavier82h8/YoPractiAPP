@@ -59,7 +59,7 @@ export default function Home() {
               <Link href="/register">Get Started</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link href="#featured-internships">Browse Internships</Link>
+              <Link href="/#featured-internships">Browse Internships</Link>
             </Button>
           </div>
         </div>

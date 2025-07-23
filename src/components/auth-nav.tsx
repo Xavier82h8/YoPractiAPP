@@ -35,10 +35,8 @@ export function AuthNav() {
         }
     };
     
-    // Initial check
     handleStorageChange();
 
-    // Listen for storage changes to sync across tabs
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
@@ -47,21 +45,17 @@ export function AuthNav() {
   }, []);
 
   const handleLogout = () => {
-    // Clear all user data from localStorage
     Object.keys(localStorage).forEach(key => {
         if (key.startsWith('user')) {
             localStorage.removeItem(key);
         }
     });
     
-    // Update state and notify user
     setUser(null);
     toast({ title: 'Éxito', description: 'Sesión cerrada correctamente.' });
     
-    // Dispatch storage event to notify other tabs
     window.dispatchEvent(new Event("storage"));
 
-    // Redirect and refresh
     router.push('/');
     router.refresh();
   };
@@ -116,5 +110,3 @@ export function AuthNav() {
     </DropdownMenu>
   );
 }
-
-    

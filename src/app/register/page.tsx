@@ -63,8 +63,6 @@ export default function RegisterPage() {
 
     try {
       await signInWithRedirect(auth, provider);
-      // La redirección ocurrirá aquí. El código de abajo no se ejecutará en este momento.
-      // El resultado se manejará en la página de perfil después de que el usuario regrese.
     } catch (error: any) {
       toast({
         variant: 'destructive',

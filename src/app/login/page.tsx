@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -55,7 +55,7 @@ export default function LoginPage() {
   });
 
   async function handleGoogleLogin() {
-    if (isGoogleLoading) return;
+    if (isGoogleLoading || isLoading) return;
     setIsGoogleLoading(true);
     
     const provider = new GoogleAuthProvider();
@@ -63,38 +63,15 @@ export default function LoginPage() {
     provider.addScope('email');
 
     try {
-      const result = await signInWithPopup(auth, provider);
-      const googleUser = result.user;
-
-      const body = {
-        email: googleUser.email,
-        fullName: googleUser.displayName,
-        googleId: googleUser.uid,
-      };
-      
-      const response = await fetch('https://yopracticando.com/api/google-auth.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      const apiResult = await response.json();
-
-      if (apiResult.success && apiResult.usuario) {
-        handleSuccessfulLogin({ ...apiResult.usuario, email: body.email });
-      } else {
-        throw new Error(apiResult.message || 'La API de Google devolvió un error.');
-      }
-
+      await signInWithRedirect(auth, provider);
+      // La redirección ocurrirá aquí. El código de abajo no se ejecutará en este momento.
+      // El resultado se manejará en la página de perfil después de que el usuario regrese.
     } catch (error: any) {
         toast({
           variant: 'destructive',
           title: 'Error de Google',
-          description: error.code === 'auth/popup-closed-by-user' 
-              ? 'El proceso fue cancelado.' 
-              : error.message || 'No se pudo iniciar sesión con Google.',
+          description: error.message || 'No se pudo iniciar el proceso de sesión con Google.',
         });
-    } finally {
         setIsGoogleLoading(false);
     }
   }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -42,20 +42,6 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const handleSuccessfulLogin = (userData: any) => {
-    localStorage.setItem('userId', String(userData.id));
-    localStorage.setItem('userEmail', userData.email || '');
-    localStorage.setItem('userFullName', userData.fullName || 'Usuario');
-    localStorage.setItem('userType', userData.tipo_usuario);
-    if (userData.token) localStorage.setItem('userToken', userData.token);
-    
-    window.dispatchEvent(new Event("storage"));
-    
-    toast({ title: "¡Éxito!", description: "Registro y inicio de sesión exitosos." });
-    router.push("/profile");
-    router.refresh();
-  };
-  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -68,7 +54,7 @@ export default function RegisterPage() {
   });
 
   async function handleGoogleRegister() {
-    if (isGoogleLoading) return;
+    if (isGoogleLoading || isLoading) return;
     setIsGoogleLoading(true);
 
     const provider = new GoogleAuthProvider();
@@ -76,38 +62,16 @@ export default function RegisterPage() {
     provider.addScope('email');
 
     try {
-      const result = await signInWithPopup(auth, provider);
-      const googleUser = result.user;
-
-      const body = {
-        email: googleUser.email,
-        fullName: googleUser.displayName,
-        googleId: googleUser.uid,
-      };
-      
-      const response = await fetch('https://yopracticando.com/api/google-auth.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      const apiResult = await response.json();
-
-      if (apiResult.success && apiResult.usuario) {
-        handleSuccessfulLogin({ ...apiResult.usuario, email: body.email });
-      } else {
-        throw new Error(apiResult.message || 'La API de Google devolvió un error.');
-      }
+      await signInWithRedirect(auth, provider);
+      // La redirección ocurrirá aquí. El código de abajo no se ejecutará en este momento.
+      // El resultado se manejará en la página de perfil después de que el usuario regrese.
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Error de Google',
-        description: error.code === 'auth/popup-closed-by-user' 
-            ? 'El proceso fue cancelado.' 
-            : error.message || 'No se pudo registrar con Google.',
+        description: error.message || 'No se pudo iniciar el proceso de registro con Google.',
       });
-    } finally {
-        setIsGoogleLoading(false);
+      setIsGoogleLoading(false);
     }
   }
 

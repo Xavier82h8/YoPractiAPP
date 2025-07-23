@@ -36,10 +36,9 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-// --- NUEVA FUNCIÓN DE LOGGING ---
 async function logToServer(message: string) {
   try {
-    await fetch('https://yopracticando.com/api/edit-profile.php', {
+    await fetch('https://yopracticando.com/api/log-receiver.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ logEntry: `REGISTER_PAGE: ${message}` }),

@@ -29,10 +29,9 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-// --- NUEVA FUNCIÓN DE LOGGING ---
 async function logToServer(message: string) {
   try {
-    await fetch('https://yopracticando.com/api/edit-profile.php', {
+    await fetch('https://yopracticando.com/api/log-receiver.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ logEntry: `LOGIN_PAGE: ${message}` }),
@@ -46,7 +45,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(true); // Start as true to handle redirect
+  const [isGoogleLoading, setIsGoogleLoading] = useState(true); 
 
   const handleGoogleAuth = async (googleUser: FirebaseUser) => {
     await logToServer(`[Paso 2] Entrando a handleGoogleAuth con el usuario de Google: ${googleUser.email}`);

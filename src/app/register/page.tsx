@@ -108,10 +108,12 @@ export default function RegisterPage() {
   async function handleGoogleRegister() {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
-    signInWithRedirect(auth, provider).catch(async (error) => {
+    try {
+        await signInWithRedirect(auth, provider);
+    } catch (error) {
         toast({ variant: 'destructive', title: 'Error', description: 'No se pudo iniciar el proceso con Google.' });
         setIsGoogleLoading(false);
-    });
+    }
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {

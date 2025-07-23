@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { GoogleAuthProvider, signInWithRedirect, getRedirectResult, User as FirebaseUser } from "firebase/auth";
+import { GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -36,18 +36,6 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-async function logToServer(message: string) {
-  try {
-    await fetch('https://yopracticando.com/api/log-receiver.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ logEntry: `REGISTER_PAGE: ${message}` }),
-    });
-  } catch (error) {
-    console.error('Error al enviar log al servidor:', error);
-  }
-}
-
 export default function RegisterPage() {
   const { toast } = useToast();
   const router = useRouter();
@@ -56,17 +44,12 @@ export default function RegisterPage() {
   
   useEffect(() => {
     let isMounted = true;
-    logToServer('[Paso 1.0] Página cargada. Verificando resultado de redirección de Google.');
     
     getRedirectResult(auth)
       .then(async (result) => {
-        if (!isMounted) {
-          await logToServer('[DEBUG] El componente ya no está montado tras getRedirectResult. Se aborta.');
-          return;
-        }
+        if (!isMounted) return;
 
         if (result) {
-          await logToServer(`[Paso 2.0] Se encontró resultado de Google. Usuario: ${result.user.email}`);
           const googleUser = result.user;
           const body = {
             email: googleUser.email,
@@ -74,8 +57,6 @@ export default function RegisterPage() {
             googleId: googleUser.uid,
           };
           
-          await logToServer(`[Paso 3.0] Enviando datos a la API /google-auth.php: ${JSON.stringify(body)}`);
-
           try {
             const response = await fetch('https://yopracticando.com/api/google-auth.php', {
               method: 'POST',
@@ -84,35 +65,28 @@ export default function RegisterPage() {
             });
 
             const apiResult = await response.json();
-            await logToServer(`[Paso 4.0] Respuesta recibida de la API: ${JSON.stringify(apiResult)}`);
 
             if (apiResult.success && apiResult.usuario) {
-              await logToServer('[Paso 5.0] La API devolvió éxito. Guardando datos en localStorage.');
               localStorage.setItem('userId', String(apiResult.usuario.id));
               localStorage.setItem('userEmail', apiResult.usuario.email || '');
               localStorage.setItem('userFullName', apiResult.usuario.fullName || 'Usuario');
               localStorage.setItem('userType', apiResult.usuario.tipo_usuario);
               window.dispatchEvent(new Event("storage"));
               toast({ title: "¡Éxito!", description: "Registro con Google exitoso." });
-              
-              await logToServer('[Paso 6.0] Redirigiendo a /profile...');
               router.push("/profile");
             } else {
               throw new Error(apiResult.message || 'La API devolvió un error inesperado.');
             }
           } catch (error: any) {
-            await logToServer(`[¡ERROR en API!] Fallo en la comunicación o respuesta de la API: ${error.message}`);
             toast({ variant: "destructive", title: "Error de Servidor", description: error.message });
             setIsGoogleLoading(false);
           }
         } else {
-          await logToServer('[DEBUG] No se encontró resultado de redirección. La página se cargó normalmente.');
           setIsGoogleLoading(false);
         }
       })
       .catch(async (error) => {
         if (!isMounted) return;
-        await logToServer(`[¡ERROR en Google!] Fallo al obtener el resultado de la redirección: ${error.code} - ${error.message}`);
         toast({ variant: "destructive", title: "Error de Autenticación", description: `Hubo un problema al verificar con Google: ${error.message}` });
         setIsGoogleLoading(false);
       });
@@ -132,11 +106,9 @@ export default function RegisterPage() {
   });
 
   async function handleGoogleRegister() {
-    await logToServer('Iniciando el proceso de redirección con Google...');
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     signInWithRedirect(auth, provider).catch(async (error) => {
-        await logToServer(`[¡ERROR!] Fallo al iniciar signInWithRedirect: ${error.message}`);
         toast({ variant: 'destructive', title: 'Error', description: 'No se pudo iniciar el proceso con Google.' });
         setIsGoogleLoading(false);
     });
@@ -189,7 +161,7 @@ export default function RegisterPage() {
     return (
      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
        <Loader2 className="h-16 w-16 animate-spin" />
-       <span className="ml-4 text-lg">Verificando...</span>
+       <span className="ml-4 text-lg">Verificando con Google...</span>
      </div>
    );
  }
@@ -215,7 +187,7 @@ export default function RegisterPage() {
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                         className="grid grid-cols-2 gap-4"
-                        disabled={isLoading}
+                        disabled={isLoading || isGoogleLoading}
                       >
                         <FormItem>
                           <FormControl>
@@ -261,7 +233,7 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>{form.watch("userType") === 'alumno' ? 'Nombre Completo' : 'Nombre de la Empresa'}</FormLabel>
                     <FormControl>
-                      <Input placeholder={form.watch("userType") === 'alumno' ? 'John Doe' : 'Innovate Inc.'} {...field} disabled={isLoading}/>
+                      <Input placeholder={form.watch("userType") === 'alumno' ? 'John Doe' : 'Innovate Inc.'} {...field} disabled={isLoading || isGoogleLoading}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -274,7 +246,7 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Correo Electrónico</FormLabel>
                     <FormControl>
-                      <Input placeholder="nombre@ejemplo.com" {...field} disabled={isLoading}/>
+                      <Input placeholder="nombre@ejemplo.com" {...field} disabled={isLoading || isGoogleLoading}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -287,7 +259,7 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Número de Teléfono</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="987654321" {...field} disabled={isLoading}/>
+                      <Input type="tel" placeholder="987654321" {...field} disabled={isLoading || isGoogleLoading}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -300,13 +272,13 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Contraseña</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} disabled={isLoading}/>
+                      <Input type="password" placeholder="••••••••" {...field} disabled={isLoading || isGoogleLoading}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Crear Cuenta
               </Button>
@@ -322,7 +294,7 @@ export default function RegisterPage() {
               </span>
             </div>
           </div>
-           <Button variant="outline" className="w-full" onClick={handleGoogleRegister} disabled={isGoogleLoading}>
+           <Button variant="outline" className="w-full" onClick={handleGoogleRegister} disabled={isLoading || isGoogleLoading}>
             <GoogleIcon className="mr-2" />
             Google
           </Button>

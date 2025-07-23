@@ -13,16 +13,6 @@ include("../functions.php");
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-// --- NUEVO: SISTEMA DE LOGGING ---
-if (isset($data['logEntry'])) {
-    $logMessage = "[" . date('Y-m-d H:i:s') . "] " . $data['logEntry'] . PHP_EOL;
-    file_put_contents('frontend_debug.log', $logMessage, FILE_APPEND);
-    echo json_encode(["success" => true, "message" => "Log received."]);
-    exit;
-}
-// --- FIN DEL SISTEMA DE LOGGING ---
-
-
 $id = $data['id'] ?? null;
 
 // El ID es el único campo estrictamente requerido

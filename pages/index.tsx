@@ -65,7 +65,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-20 md:py-24">
+      <section id="featured-internships" className="py-20 md:py-24">
         <div className="container mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center mb-20">
                 <div className="flex flex-col items-center">

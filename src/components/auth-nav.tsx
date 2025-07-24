@@ -23,20 +23,16 @@ export function AuthNav() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const handleLogout = useCallback((silent = false) => {
+  const handleLogout = useCallback(() => {
     auth.signOut().then(() => {
+      // Limpiar solo los datos relacionados con el usuario en localStorage
       Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('user')) {
+          if (key.startsWith('user') || key === 'userId') {
               localStorage.removeItem(key);
           }
       });
-      localStorage.removeItem('userId');
-      
       setUser(null);
-      if (!silent) {
-         toast({ title: 'Éxito', description: 'Sesión cerrada correctamente.' });
-      }
-      
+      toast({ title: 'Éxito', description: 'Sesión cerrada correctamente.' });
       window.dispatchEvent(new Event("storage"));
       router.push('/');
       router.refresh();
@@ -47,41 +43,37 @@ export function AuthNav() {
     const handleStorageChange = () => {
       setLoading(true);
       const userId = localStorage.getItem('userId');
-      const userEmail = localStorage.getItem('userEmail');
-      const userType = localStorage.getItem('userType');
-      const userFullName = localStorage.getItem('userFullName');
-
-      if (userId && userEmail && userType && userFullName) {
-        setUser({ id: userId, email: userEmail, type: userType, fullName: userFullName });
+      if (userId) {
+        const userEmail = localStorage.getItem('userEmail');
+        const userType = localStorage.getItem('userType');
+        const userFullName = localStorage.getItem('userFullName');
+        setUser({ id: userId, email: userEmail || '', type: userType || '', fullName: userFullName || 'Usuario' });
       } else {
         setUser(null);
       }
       setLoading(false);
     };
     
-    handleStorageChange();
+    handleStorageChange(); // Llamada inicial para establecer el estado
 
     window.addEventListener('storage', handleStorageChange);
     
+    // Escucha cambios en el estado de autenticación de Firebase
     const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
-        if (!firebaseUser && localStorage.getItem('userId')) {
-             handleLogout(true); // Call logout if firebase is signed out but localstorage persists
-        } else if (firebaseUser && !localStorage.getItem('userId')) {
-             // Firebase has a user, but local storage is empty.
-             // This can happen on a new tab. We need to fetch user data.
-             // For now, we rely on the profile page to set the local storage.
-             // A more advanced implementation might fetch profile data here.
+        if (!firebaseUser && user) {
+            // Si Firebase dice que no hay usuario pero localmente sí, cerramos sesión
+            handleLogout();
         }
     });
 
     return () => {
         window.removeEventListener('storage', handleStorageChange);
-        unsubscribe();
+        unsubscribe(); // Limpiar el listener de Firebase
     };
-  }, [handleLogout]);
+  }, [handleLogout, user]); // Añadir 'user' como dependencia
 
   if (loading) {
-    return <Loader2 className="h-6 w-6 animate-spin" />;
+    return <div className="h-10 w-10 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
   }
 
   if (!user) {
@@ -99,8 +91,8 @@ export function AuthNav() {
 
   const userInitial = user.fullName ? user.fullName.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase();
   const avatarUrl = user.fullName 
-    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=random` 
-    : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=random`;
+    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=random&color=fff` 
+    : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=random&color=fff`;
 
   return (
      <DropdownMenu>
@@ -129,7 +121,7 @@ export function AuthNav() {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => handleLogout(false)}>
+        <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Cerrar Sesión</span>
         </DropdownMenuItem>

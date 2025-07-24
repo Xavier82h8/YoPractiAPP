@@ -42,18 +42,18 @@ export default function ProfilePage() {
       email: userData.email,
       fullName: userData.fullName || userData.nombre_usuario || userData.nombre_empresa || 'Usuario',
       userType: userData.tipo_usuario || userData.userType,
-      phone: userData.phone || "",
-      skills: userData.skills || "",
+      phone: userData.phone || userData.telefono || "",
+      skills: userData.skills || userData.habilidades || "",
       experience: userData.experience || "",
-      companyName: userData.companyName || (userData.tipo_usuario === 'empresa' ? (userData.fullName || userData.nombre_empresa) : ''),
-      companyDescription: userData.companyDescription || "",
+      companyName: userData.companyName || userData.nombre_empresa || (userData.tipo_usuario === 'empresa' ? (userData.fullName || userData.nombre_usuario) : ''),
+      companyDescription: userData.companyDescription || userData.descripcion_empresa || "",
       website: userData.website || "",
-      category: userData.category || "",
-      foundedYear: userData.foundedYear || "",
-      companySize: userData.companySize || "",
+      category: userData.category || userData.categoria || "",
+      foundedYear: userData.foundedYear || userData.ano_fundacion || "",
+      companySize: userData.companySize || userData.tamano_empresa || "",
       logo: userData.logo || "",
-      location: userData.location || "",
-      address: userData.address || "",
+      location: userData.location || userData.ubicacion || "",
+      address: userData.address || userData.direccion || "",
     };
 
     localStorage.setItem('userId', profile.id);
@@ -62,20 +62,17 @@ export default function ProfilePage() {
     localStorage.setItem('userType', profile.userType);
     
     // Guardar también los campos adicionales para que estén disponibles al recargar
-    if (profile.userType === 'empresa') {
-        localStorage.setItem('userCompanyDescription', profile.companyDescription || '');
-        localStorage.setItem('userWebsite', profile.website || '');
-        localStorage.setItem('userCategory', profile.category || '');
-        localStorage.setItem('userFoundedYear', profile.foundedYear || '');
-        localStorage.setItem('userCompanySize', profile.companySize || '');
-        localStorage.setItem('userLogo', profile.logo || '');
-        localStorage.setItem('userLocation', profile.location || '');
-        localStorage.setItem('userAddress', profile.address || '');
-    } else {
-        localStorage.setItem('userSkills', profile.skills || '');
-        localStorage.setItem('userExperience', profile.experience || '');
-        localStorage.setItem('userPhone', profile.phone || '');
-    }
+    localStorage.setItem('userPhone', profile.phone || '');
+    localStorage.setItem('userSkills', profile.skills || '');
+    localStorage.setItem('userExperience', profile.experience || '');
+    localStorage.setItem('userCompanyDescription', profile.companyDescription || '');
+    localStorage.setItem('userWebsite', profile.website || '');
+    localStorage.setItem('userCategory', profile.category || '');
+    localStorage.setItem('userFoundedYear', profile.foundedYear || '');
+    localStorage.setItem('userCompanySize', profile.companySize || '');
+    localStorage.setItem('userLogo', profile.logo || '');
+    localStorage.setItem('userLocation', profile.location || '');
+    localStorage.setItem('userAddress', profile.address || '');
 
     window.dispatchEvent(new Event("storage"));
     
@@ -123,7 +120,7 @@ export default function ProfilePage() {
                   phone: localStorage.getItem('userPhone') || "",
                   skills: localStorage.getItem('userSkills') || "",
                   experience: localStorage.getItem('userExperience') || "",
-                  companyName: localStorage.getItem('userType') === 'empresa' ? (localStorage.getItem('userFullName') || '') : '',
+                  companyName: localStorage.getItem('userFullName') || '',
                   companyDescription: localStorage.getItem('userCompanyDescription') || "",
                   website: localStorage.getItem('userWebsite') || "",
                   category: localStorage.getItem('userCategory') || "",

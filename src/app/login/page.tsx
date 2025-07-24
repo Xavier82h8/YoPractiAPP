@@ -46,7 +46,6 @@ export default function LoginPage() {
     
     toast({ title: "¡Éxito!", description: "Inicio de sesión exitoso." });
     router.push("/profile");
-    router.refresh();
   };
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -63,6 +62,8 @@ export default function LoginPage() {
     provider.addScope('email');
 
     try {
+      // signInWithRedirect no devuelve un resultado aquí. 
+      // El resultado se obtiene en la página de redirección.
       await signInWithRedirect(auth, provider);
     } catch (error: any) {
         toast({

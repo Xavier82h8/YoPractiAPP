@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { LayoutDashboard, LogOut } from 'lucide-react';
+import { auth } from '@/lib/firebase';
 
 interface UserData {
   id: string;
@@ -38,13 +39,23 @@ export function AuthNav() {
     handleStorageChange();
 
     window.addEventListener('storage', handleStorageChange);
+    
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+        if (!firebaseUser) {
+             if (localStorage.getItem('userId')) {
+                handleLogout(true); // Call logout if firebase is signed out but localstorage persists
+            }
+        }
+    });
 
     return () => {
-        window.removeEventListener('storage', handleStorageChange)
+        window.removeEventListener('storage', handleStorageChange);
+        unsubscribe();
     };
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = (silent = false) => {
+    auth.signOut();
     Object.keys(localStorage).forEach(key => {
         if (key.startsWith('user')) {
             localStorage.removeItem(key);
@@ -52,7 +63,9 @@ export function AuthNav() {
     });
     
     setUser(null);
-    toast({ title: 'Éxito', description: 'Sesión cerrada correctamente.' });
+    if (!silent) {
+       toast({ title: 'Éxito', description: 'Sesión cerrada correctamente.' });
+    }
     
     window.dispatchEvent(new Event("storage"));
 
@@ -102,7 +115,7 @@ export function AuthNav() {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>
+        <DropdownMenuItem onClick={() => handleLogout(false)}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Cerrar Sesión</span>
         </DropdownMenuItem>

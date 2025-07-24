@@ -35,6 +35,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
+    // We need to ensure this code runs only on the client
     const localUserId = localStorage.getItem('userId');
     if (localUserId) {
         const profile: UserProfile = {
@@ -56,6 +57,7 @@ export default function ProfilePage() {
             address: localStorage.getItem('userAddress') || "",
         };
         setUserProfile(profile);
+        setIsLoading(false);
     } else {
       toast({
         variant: 'destructive',
@@ -64,10 +66,8 @@ export default function ProfilePage() {
       });
       router.push('/login');
     }
-    
-    setIsLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router]);
 
 
   if (isLoading) {
@@ -79,9 +79,10 @@ export default function ProfilePage() {
   }
   
   if (!userProfile) {
+     // This case might be hit briefly before the redirect happens
      return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
-        <p>No se pudieron cargar los datos del perfil. Por favor, intenta iniciar sesión de nuevo.</p>
+         <Loader2 className="h-16 w-16 animate-spin" />
       </div>
     );
   }

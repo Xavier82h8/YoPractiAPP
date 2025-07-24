@@ -11,11 +11,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 include("../functions.php");
 
-$data = json_decode(file_get_contents("php://input"), true);
+$logFile = __DIR__ . '/google-auth.log';
+file_put_contents($logFile, "--- [".date('Y-m-d H:i:s')."] Nueva Petición ---\n", FILE_APPEND);
+$rawInput = file_get_contents("php://input");
+file_put_contents($logFile, "Payload Recibido: " . $rawInput . "\n", FILE_APPEND);
+
+$data = json_decode($rawInput, true);
+
+if (json_last_error() !== JSON_ERROR_NONE) {
+    file_put_contents($logFile, "Error de JSON: " . json_last_error_msg() . "\n", FILE_APPEND);
+    http_response_code(400);
+    echo json_encode(["success" => false, "message" => "Error en el formato JSON."]);
+    exit;
+}
 
 $email = $data['email'] ?? null;
 $fullName = $data['fullName'] ?? null;
 $googleId = $data['googleId'] ?? null;
+
+file_put_contents($logFile, "Datos Procesados: Email=$email, FullName=$fullName, GoogleId=$googleId\n", FILE_APPEND);
 
 if (!$email || !$googleId) {
     echo json_encode(["success" => false, "message" => "Faltan el email o el ID de Google."]);

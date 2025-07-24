@@ -140,3 +140,67 @@ Issues? Report them at https://github.com/firebase/firebase-tools/issues and att
 [debug] [2025-07-24T09:04:55.632Z] Jul 24, 2025 9:04:55 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
  {"metadata":{"emulator":{"name":"firestore"},"message":"Jul 24, 2025 9:04:55 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel\nINFO: Connected to new websocket client\n"}}
+[debug] [2025-07-24T09:21:25.825Z] ----------------------------------------------------------------------
+[debug] [2025-07-24T09:21:25.828Z] Command:       /nix/store/ws50yvm6vzlzf7jzz6n7xh4szddrack1-nodejs-20.19.1/bin/node /home/user/.global_modules/bin/firebase init
+[debug] [2025-07-24T09:21:25.828Z] CLI Version:   14.11.1
+[debug] [2025-07-24T09:21:25.829Z] Platform:      linux
+[debug] [2025-07-24T09:21:25.829Z] Node Version:  v20.19.1
+[debug] [2025-07-24T09:21:25.829Z] Time:          Thu Jul 24 2025 09:21:25 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-07-24T09:21:25.829Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-07-24T09:21:25.838Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-07-24T09:21:25.839Z] > authorizing via signed-in user (javiandraft@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /home/user/studio
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2025-07-24T09:22:20.773Z] Using project from CLI flag: yopracticando-36seb
+[debug] [2025-07-24T09:22:20.778Z] Checked if tokens are valid: false, expires at: 1753349608631
+[debug] [2025-07-24T09:22:20.778Z] Checked if tokens are valid: false, expires at: 1753349608631
+[debug] [2025-07-24T09:22:20.780Z] > refreshing access token with scopes: []
+[debug] [2025-07-24T09:22:20.787Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-07-24T09:22:20.787Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-07-24T09:22:20.888Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-07-24T09:22:20.888Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-07-24T09:22:20.901Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/yopracticando-36seb [none]
+[debug] [2025-07-24T09:22:21.202Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/yopracticando-36seb 200
+[debug] [2025-07-24T09:22:21.203Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/yopracticando-36seb {"projectId":"yopracticando-36seb","projectNumber":"634933837473","displayName":"YoPracticando","name":"projects/yopracticando-36seb","resources":{"hostingSite":"yopracticando-36seb"},"state":"ACTIVE","etag":"1_bf9ff36c-cbd1-4207-bb5b-0c98ad6fa618"}
+[info] i  Using project yopracticando-36seb (YoPracticando) 
+[info] 
+=== Hosting Setup
+[debug] [2025-07-24T09:22:21.218Z] Checked if tokens are valid: true, expires at: 1753352539889
+[debug] [2025-07-24T09:22:21.218Z] Checked if tokens are valid: true, expires at: 1753352539889
+[debug] [2025-07-24T09:22:21.218Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/yopracticando-36seb [none]
+[debug] [2025-07-24T09:22:21.485Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/yopracticando-36seb 200
+[debug] [2025-07-24T09:22:21.485Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/yopracticando-36seb {"projectId":"yopracticando-36seb","projectNumber":"634933837473","displayName":"YoPracticando","name":"projects/yopracticando-36seb","resources":{"hostingSite":"yopracticando-36seb"},"state":"ACTIVE","etag":"1_bf9ff36c-cbd1-4207-bb5b-0c98ad6fa618"}
+[info] 
+[info] Your public directory is the folder (relative to your project directory) that
+[info] will contain Hosting assets to be uploaded with firebase deploy. If you
+[info] have a build process for your assets, use your build's output directory.
+[info] 
+[debug] [2025-07-24T09:22:30.046Z] >>> [apiv2][query] GET https://www.gstatic.com/firebasejs/releases.json [none]
+[debug] [2025-07-24T09:22:30.070Z] <<< [apiv2][status] GET https://www.gstatic.com/firebasejs/releases.json 200
+[debug] [2025-07-24T09:22:30.070Z] <<< [apiv2][body] GET https://www.gstatic.com/firebasejs/releases.json {"current":{"version":"12.0.0","browserURL":"https://www.gstatic.com/firebasejs/12.0.0/firebase.js","packageURL":"https://www.gstatic.com/firebasejs/12.0.0/firebase.tgz"},"live":{"version":"12.0","browserURL":"https://www.gstatic.com/firebasejs/live/12.0/firebase.js","packageURL":"https://www.gstatic.com/firebasejs/live/12.0/firebase.tgz"},"components":{"ai":"https://www.gstatic.com/firebasejs/12.0.0/firebase-ai.js","analytics":"https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js","app":"https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js","app-check":"https://www.gstatic.com/firebasejs/12.0.0/firebase-app-check.js","auth":"https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js","auth/cordova":"https://www.gstatic.com/firebasejs/12.0.0/firebase-auth/cordova.js","auth/web-extension":"https://www.gstatic.com/firebasejs/12.0.0/firebase-auth/web-extension.js","functions":"https://www.gstatic.com/firebasejs/12.0.0/firebase-functions.js","firestore":"https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js","firestore/lite":"https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore/lite.js","installations":"https://www.gstatic.com/firebasejs/12.0.0/firebase-installations.js","storage":"https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js","performance":"https://www.gstatic.com/firebasejs/12.0.0/firebase-performance.js","remote-config":"https://www.gstatic.com/firebasejs/12.0.0/firebase-remote-config.js","messaging":"https://www.gstatic.com/firebasejs/12.0.0/firebase-messaging.js","messaging/sw":"https://www.gstatic.com/firebasejs/12.0.0/firebase-messaging/sw.js","database":"https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js","data-connect":"https://www.gstatic.com/firebasejs/12.0.0/firebase-data-connect.js","firestore.memory":"https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.memory.js"}}
+[info] ✔  Wrote public/index.html 
+[info] 
+[info] i  Detected a .git folder at /home/user/studio 
+[info] i  Authorizing with GitHub to upload your service account to a GitHub repository's secrets store. 
+[info] 
+[info] Visit this URL on this device to log in:
+[info] https://github.com/login/oauth/authorize?client_id=89cf50f02ac6aaed3484&state=540863171&redirect_uri=http%3A%2F%2Flocalhost%3A9005&scope=read%3Auser%20repo%20public_repo
+[info] 
+[info] Waiting for authentication...

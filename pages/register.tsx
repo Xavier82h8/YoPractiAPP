@@ -54,6 +54,20 @@ export default function RegisterPage() {
     },
   });
 
+  const handleSuccessfulGoogleLogin = (userData: any) => {
+    localStorage.setItem('userId', String(userData.id));
+    localStorage.setItem('userEmail', userData.email || '');
+    localStorage.setItem('userFullName', userData.fullName || 'Usuario');
+    localStorage.setItem('userType', userData.tipo_usuario || userData.userType);
+    if (userData.token) localStorage.setItem('userToken', userData.token);
+    
+    window.dispatchEvent(new Event("storage"));
+    
+    toast({ title: "¡Éxito!", description: "Inicio de sesión con Google exitoso." });
+    router.push("/profile");
+    router.refresh();
+  };
+
   async function handleGoogleRegister() {
     if (isGoogleLoading || isLoading) return;
     setIsGoogleLoading(true);
@@ -78,14 +92,7 @@ export default function RegisterPage() {
 
       const apiResult = await response.json();
       if (apiResult.success && apiResult.usuario) {
-        localStorage.setItem('userId', String(apiResult.usuario.id));
-        localStorage.setItem('userEmail', googleUser.email || '');
-        localStorage.setItem('userFullName', googleUser.displayName || 'Usuario');
-        localStorage.setItem('userType', apiResult.usuario.tipo_usuario);
-        window.dispatchEvent(new Event("storage"));
-        toast({ title: "¡Éxito!", description: "Registro con Google exitoso." });
-        router.push('/profile');
-        router.refresh();
+        handleSuccessfulGoogleLogin({ ...apiResult.usuario, email: googleUser.email, userType: apiResult.usuario.tipo_usuario });
       } else {
         throw new Error(apiResult.message || 'La API de Google devolvió un error.');
       }

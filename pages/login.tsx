@@ -36,7 +36,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const handleSuccessfulLogin = (userData: any) => {
+  const handleSuccessfulLogin = (userData: any, source: 'local' | 'google' = 'local') => {
     localStorage.setItem('userId', String(userData.id));
     localStorage.setItem('userEmail', userData.email || '');
     localStorage.setItem('userFullName', userData.fullName || 'Usuario');
@@ -119,7 +119,7 @@ export default function LoginPage() {
           ...result.usuario,
           email: values.email.trim(),
           fullName: result.usuario.nombre_usuario || result.usuario.nombre_empresa || 'Usuario'
-        });
+        }, 'local');
       } else {
         toast({
           variant: "destructive",

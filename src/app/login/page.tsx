@@ -33,37 +33,21 @@ export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const handleSuccessfulLogin = (userData: any) => {
-    localStorage.setItem('userId', String(userData.id));
-    localStorage.setItem('userEmail', userData.email || '');
-    localStorage.setItem('userFullName', userData.fullName || 'Usuario');
-    localStorage.setItem('userType', userData.tipo_usuario);
-    if (userData.token) localStorage.setItem('userToken', userData.token);
-    
-    window.dispatchEvent(new Event("storage"));
-    
-    toast({ title: "¡Éxito!", description: "Inicio de sesión exitoso." });
-    router.push("/profile");
-  };
-  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { email: "", password: "" },
   });
 
   async function handleGoogleLogin() {
-    if (isGoogleLoading || isLoading) return;
-    setIsGoogleLoading(true);
+    if (isLoading) return;
+    setIsLoading(true);
     
     const provider = new GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
 
     try {
-      // signInWithRedirect no devuelve un resultado aquí. 
-      // El resultado se obtiene en la página de redirección.
       await signInWithRedirect(auth, provider);
     } catch (error: any) {
         toast({
@@ -71,12 +55,15 @@ export default function LoginPage() {
           title: 'Error de Google',
           description: error.message || 'No se pudo iniciar el proceso de sesión con Google.',
         });
-        setIsGoogleLoading(false);
+        setIsLoading(false);
     }
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+    // This part remains the same, but we need to call handleSuccessfulLogin
+    // which is now removed. I will add it back but simplified.
+    // A better approach would be to have a shared function, but for now this is fine.
     try {
       const body = new FormData();
       body.append('email', values.email.trim());
@@ -95,11 +82,16 @@ export default function LoginPage() {
       const result = await response.json();
 
       if (result.success && result.usuario) {
-         handleSuccessfulLogin({
-          ...result.usuario,
-          email: values.email.trim(),
-          fullName: result.usuario.nombre_usuario || result.usuario.nombre_empresa || 'Usuario'
-        });
+        localStorage.setItem('userId', String(result.usuario.id));
+        localStorage.setItem('userEmail', values.email.trim());
+        localStorage.setItem('userFullName', result.usuario.nombre_usuario || result.usuario.nombre_empresa || 'Usuario');
+        localStorage.setItem('userType', result.usuario.tipo_usuario);
+        if (result.usuario.token) localStorage.setItem('userToken', result.usuario.token);
+
+        window.dispatchEvent(new Event("storage"));
+
+        toast({ title: "¡Éxito!", description: "Inicio de sesión exitoso." });
+        router.push("/profile");
       } else {
         toast({
           variant: "destructive",
@@ -135,7 +127,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Correo Electrónico</FormLabel>
                     <FormControl>
-                      <Input placeholder="nombre@ejemplo.com" {...field} disabled={isLoading || isGoogleLoading} />
+                      <Input placeholder="nombre@ejemplo.com" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -148,13 +140,13 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Contraseña</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} disabled={isLoading || isGoogleLoading}/>
+                      <Input type="password" placeholder="••••••••" {...field} disabled={isLoading}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading}>
                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Iniciar Sesión
               </Button>
@@ -170,8 +162,8 @@ export default function LoginPage() {
               </span>
             </div>
           </div>
-          <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading || isGoogleLoading}>
-            {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon className="mr-2"/>}
+          <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading}>
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon className="mr-2"/>}
             Google
           </Button>
         </CardContent>

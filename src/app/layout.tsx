@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import GoogleRedirectHandler from '@/components/google-redirect-handler';
 
 const fontBody = PT_Sans({
   subsets: ['latin'],
@@ -38,6 +39,7 @@ export default function RootLayout({
         )}
       >
         <div className="relative flex min-h-screen flex-col">
+          <GoogleRedirectHandler />
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />

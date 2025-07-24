@@ -52,6 +52,7 @@ try {
         $userId = $usuario['id'];
         
         // Si el usuario existe pero no tiene google_id, o no está verificado, lo actualizamos.
+        // Esto vincula la cuenta de Google a la cuenta de email existente.
         if (empty($usuario['google_id']) || $usuario['verificado'] != 1) {
             $updateQuery = "UPDATE registro_usuarios SET google_id = ?, verificado = 1 WHERE id = ?";
             $updateStmt = $conexion->prepare($updateQuery);
@@ -63,7 +64,7 @@ try {
 
         $response = [
             "success" => true,
-            "message" => "Usuario autenticado correctamente.",
+            "message" => "Usuario autenticado y/o vinculado correctamente.",
             "usuario" => [
                 "id" => $userId,
                 "email" => $usuario['email'],

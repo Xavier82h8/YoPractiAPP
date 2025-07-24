@@ -85,10 +85,15 @@ export default function LoginPage() {
         throw new Error(apiResult.message || 'La API de Google devolvió un error.');
       }
     } catch (error: any) {
+        console.error("Error detallado de Google Auth:", error);
+        let description = 'No se pudo iniciar el proceso de sesión con Google.';
+        if (error.code === 'auth/popup-closed-by-user') {
+          description = 'El proceso de inicio de sesión con Google fue cancelado.';
+        }
         toast({
           variant: 'destructive',
           title: 'Error de Google',
-          description: error.message || 'No se pudo iniciar el proceso de sesión con Google.',
+          description: description,
         });
     } finally {
         setIsGoogleLoading(false);

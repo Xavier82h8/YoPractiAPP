@@ -35,7 +35,6 @@ export default function ProfilePage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mueve la función de login exitoso fuera del useEffect para que sea reutilizable
   const setupUserSession = (userData: any, source: 'google' | 'local' = 'local') => {
     const profile: UserProfile = {
       id: String(userData.id),
@@ -81,16 +80,17 @@ export default function ProfilePage() {
     }
     
     setUserProfile(profile);
+    setIsLoading(false); // Detener la carga solo después de establecer el perfil
   };
   
   useEffect(() => {
     const handleAuthRedirect = async () => {
-      setIsLoading(true);
+      // No establecer isLoading(true) aquí para evitar parpadeos si ya hay sesión.
       try {
         const result = await getRedirectResult(auth);
         
         if (result && result.user) {
-          // Si hay resultado, el usuario acaba de iniciar sesión/registrarse vía Google.
+          setIsLoading(true); // Mostrar carga mientras se procesa la sesión de Google
           const googleUser = result.user;
           const response = await fetch('https://yopracticando.com/api/google-auth.php', {
             method: 'POST',
@@ -131,10 +131,11 @@ export default function ProfilePage() {
                   address: localStorage.getItem('userAddress') || "",
               };
               setUserProfile(profile);
+              setIsLoading(false); // Sesión local encontrada, detener carga
           } else {
             // No hay sesión activa, redirigir a login
             router.push('/login');
-            return; // Detener ejecución para evitar más renderizados
+            // No es necesario detener la carga aquí, la redirección ocurrirá.
           }
         }
       } catch (error: any) {
@@ -144,10 +145,10 @@ export default function ProfilePage() {
           description: error.message || 'No se pudo completar el inicio de sesión.',
         });
         localStorage.clear();
+        setIsLoading(false); // Detener carga en caso de error
         router.push('/login');
-      } finally {
-        setIsLoading(false);
-      }
+      } 
+      // No usar finally para setIsLoading(false) para tener control más preciso
     };
 
     handleAuthRedirect();

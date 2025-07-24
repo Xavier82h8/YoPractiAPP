@@ -2,9 +2,7 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  experimental: {
-    allowedDevOrigins: ["*.cloudworkstations.dev"],
-  },
+  allowedDevOrigins: ["*.cloudworkstations.dev"],
   typescript: {
     ignoreBuildErrors: true,
   },

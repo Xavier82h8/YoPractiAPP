@@ -13,9 +13,6 @@ function MyApp({ Component, pageProps }: AppProps) {
       <Head>
         <title>YoPracticando - Find Your Internship</title>
         <meta name="description" content="A platform for students and companies to connect for internships." />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
       </Head>
       <div className={cn('min-h-screen bg-background font-body antialiased')}>
         <div className="relative flex min-h-screen flex-col">

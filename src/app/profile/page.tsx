@@ -45,7 +45,7 @@ export default function ProfilePage() {
       phone: userData.phone || "",
       skills: userData.skills || "",
       experience: userData.experience || "",
-      companyName: userData.companyName || "",
+      companyName: userData.companyName || (userData.tipo_usuario === 'empresa' ? (userData.fullName || userData.nombre_empresa) : ''),
       companyDescription: userData.companyDescription || "",
       website: userData.website || "",
       category: userData.category || "",
@@ -61,6 +61,22 @@ export default function ProfilePage() {
     localStorage.setItem('userFullName', profile.fullName);
     localStorage.setItem('userType', profile.userType);
     
+    // Guardar también los campos adicionales para que estén disponibles al recargar
+    if (profile.userType === 'empresa') {
+        localStorage.setItem('userCompanyDescription', profile.companyDescription || '');
+        localStorage.setItem('userWebsite', profile.website || '');
+        localStorage.setItem('userCategory', profile.category || '');
+        localStorage.setItem('userFoundedYear', profile.foundedYear || '');
+        localStorage.setItem('userCompanySize', profile.companySize || '');
+        localStorage.setItem('userLogo', profile.logo || '');
+        localStorage.setItem('userLocation', profile.location || '');
+        localStorage.setItem('userAddress', profile.address || '');
+    } else {
+        localStorage.setItem('userSkills', profile.skills || '');
+        localStorage.setItem('userExperience', profile.experience || '');
+        localStorage.setItem('userPhone', profile.phone || '');
+    }
+
     window.dispatchEvent(new Event("storage"));
     
     if (source === 'google') {
@@ -76,7 +92,7 @@ export default function ProfilePage() {
       try {
         const result = await getRedirectResult(auth);
         
-        if (result) {
+        if (result && result.user) {
           // Si hay resultado, el usuario acaba de iniciar sesión/registrarse vía Google.
           const googleUser = result.user;
           const response = await fetch('https://yopracticando.com/api/google-auth.php', {
@@ -90,10 +106,38 @@ export default function ProfilePage() {
           });
 
           const apiResult = await response.json();
-          if (apiResult.success && apiResult.usuario) {
+          if (response.ok && apiResult.success && apiResult.usuario) {
             setupUserSession({ ...apiResult.usuario, email: googleUser.email }, 'google');
           } else {
             throw new Error(apiResult.message || 'La API de Google devolvió un error.');
+          }
+        } else {
+          // No hay resultado de redirección, verificar si hay sesión local
+          const localUserId = localStorage.getItem('userId');
+          if (localUserId) {
+              const profile: UserProfile = {
+                  id: localUserId,
+                  userType: localStorage.getItem('userType') || 'alumno',
+                  email: localStorage.getItem('userEmail') || '',
+                  fullName: localStorage.getItem('userFullName') || "Usuario",
+                  phone: localStorage.getItem('userPhone') || "",
+                  skills: localStorage.getItem('userSkills') || "",
+                  experience: localStorage.getItem('userExperience') || "",
+                  companyName: localStorage.getItem('userType') === 'empresa' ? (localStorage.getItem('userFullName') || '') : '',
+                  companyDescription: localStorage.getItem('userCompanyDescription') || "",
+                  website: localStorage.getItem('userWebsite') || "",
+                  category: localStorage.getItem('userCategory') || "",
+                  foundedYear: localStorage.getItem('userFoundedYear') || "",
+                  companySize: localStorage.getItem('userCompanySize') || "",
+                  logo: localStorage.getItem('userLogo') || "",
+                  location: localStorage.getItem('userLocation') || "",
+                  address: localStorage.getItem('userAddress') || "",
+              };
+              setUserProfile(profile);
+          } else {
+            // No hay sesión activa, redirigir a login
+            router.push('/login');
+            return; // Detener ejecución para evitar más renderizados
           }
         }
       } catch (error: any) {
@@ -104,55 +148,30 @@ export default function ProfilePage() {
         });
         localStorage.clear();
         router.push('/login');
-        return;
+      } finally {
+        setIsLoading(false);
       }
-
-      const localUserId = localStorage.getItem('userId');
-      if (localUserId) {
-          const profile: UserProfile = {
-              id: localUserId,
-              userType: localStorage.getItem('userType') || 'alumno',
-              email: localStorage.getItem('userEmail') || '',
-              fullName: localStorage.getItem('userFullName') || "Usuario",
-              phone: localStorage.getItem('userPhone') || "",
-              skills: localStorage.getItem('userSkills') || "",
-              experience: localStorage.getItem('userExperience') || "",
-              companyName: localStorage.getItem('userType') === 'empresa' ? (localStorage.getItem('userFullName') || '') : '',
-              companyDescription: localStorage.getItem('userCompanyDescription') || "",
-              website: localStorage.getItem('userWebsite') || "",
-              category: localStorage.getItem('userCategory') || "",
-              foundedYear: localStorage.getItem('userFoundedYear') || "",
-              companySize: localStorage.getItem('userCompanySize') || "",
-              logo: localStorage.getItem('userLogo') || "",
-              location: localStorage.getItem('userLocation') || "",
-              address: localStorage.getItem('userAddress') || "",
-          };
-          setUserProfile(profile);
-      } else {
-        router.push('/login');
-        return;
-      }
-      
-      setIsLoading(false);
     };
 
     handleAuthRedirect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // Dependencias vacías para que se ejecute solo una vez al montar
 
 
   if (isLoading) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
         <Loader2 className="h-16 w-16 animate-spin" />
+        <p className="ml-4 text-lg">Verificando sesión...</p>
       </div>
     );
   }
   
   if (!userProfile) {
+     // Esto puede mostrarse brevemente antes de la redirección si no hay sesión
      return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
-        <Loader2 className="h-16 w-16 animate-spin" />
+        <p>No hay sesión de usuario activa. Redirigiendo a inicio de sesión...</p>
       </div>
     );
   }
@@ -167,7 +186,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
-      <p>Tipo de usuario no reconocido. Por favor, contacta a soporte.</p>
+      <p>Tipo de usuario no reconocido: {userProfile.userType}. Por favor, contacta a soporte.</p>
     </div>
   );
 }

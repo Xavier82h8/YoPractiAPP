@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from './ui/button';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { LayoutDashboard, LogOut } from 'lucide-react';
+import { LayoutDashboard, LogOut, Loader2 } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 
 interface UserData {
@@ -19,21 +19,44 @@ interface UserData {
 
 export function AuthNav() {
   const [user, setUser] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const router = useRouter();
 
+  const handleLogout = useCallback((silent = false) => {
+    auth.signOut().then(() => {
+      Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('user')) {
+              localStorage.removeItem(key);
+          }
+      });
+      localStorage.removeItem('userId');
+      
+      setUser(null);
+      if (!silent) {
+         toast({ title: 'Éxito', description: 'Sesión cerrada correctamente.' });
+      }
+      
+      window.dispatchEvent(new Event("storage"));
+      router.push('/');
+      router.refresh();
+    });
+  }, [router, toast]);
+
   useEffect(() => {
     const handleStorageChange = () => {
-        const userId = localStorage.getItem('userId');
-        const userEmail = localStorage.getItem('userEmail');
-        const userType = localStorage.getItem('userType');
-        const userFullName = localStorage.getItem('userFullName');
+      setLoading(true);
+      const userId = localStorage.getItem('userId');
+      const userEmail = localStorage.getItem('userEmail');
+      const userType = localStorage.getItem('userType');
+      const userFullName = localStorage.getItem('userFullName');
 
-        if (userId && userEmail && userType && userFullName) {
-          setUser({ id: userId, email: userEmail, type: userType, fullName: userFullName });
-        } else {
-          setUser(null);
-        }
+      if (userId && userEmail && userType && userFullName) {
+        setUser({ id: userId, email: userEmail, type: userType, fullName: userFullName });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
     };
     
     handleStorageChange();
@@ -41,10 +64,13 @@ export function AuthNav() {
     window.addEventListener('storage', handleStorageChange);
     
     const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
-        if (!firebaseUser) {
-             if (localStorage.getItem('userId')) {
-                handleLogout(true); // Call logout if firebase is signed out but localstorage persists
-            }
+        if (!firebaseUser && localStorage.getItem('userId')) {
+             handleLogout(true); // Call logout if firebase is signed out but localstorage persists
+        } else if (firebaseUser && !localStorage.getItem('userId')) {
+             // Firebase has a user, but local storage is empty.
+             // This can happen on a new tab. We need to fetch user data.
+             // For now, we rely on the profile page to set the local storage.
+             // A more advanced implementation might fetch profile data here.
         }
     });
 
@@ -52,26 +78,11 @@ export function AuthNav() {
         window.removeEventListener('storage', handleStorageChange);
         unsubscribe();
     };
-  }, []);
+  }, [handleLogout]);
 
-  const handleLogout = (silent = false) => {
-    auth.signOut();
-    Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('user')) {
-            localStorage.removeItem(key);
-        }
-    });
-    
-    setUser(null);
-    if (!silent) {
-       toast({ title: 'Éxito', description: 'Sesión cerrada correctamente.' });
-    }
-    
-    window.dispatchEvent(new Event("storage"));
-
-    router.push('/');
-    router.refresh();
-  };
+  if (loading) {
+    return <Loader2 className="h-6 w-6 animate-spin" />;
+  }
 
   if (!user) {
     return (
@@ -87,13 +98,16 @@ export function AuthNav() {
   }
 
   const userInitial = user.fullName ? user.fullName.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase();
+  const avatarUrl = user.fullName 
+    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=random` 
+    : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=random`;
 
   return (
      <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
            <Avatar className="h-9 w-9">
-              <AvatarImage src={`https://ui-avatars.com/api/?name=${user.fullName.replace(/\s/g, '+')}&background=random`} alt={user.fullName} />
+              <AvatarImage src={avatarUrl} alt={user.fullName} />
               <AvatarFallback>{userInitial}</AvatarFallback>
             </Avatar>
         </Button>

@@ -46,24 +46,28 @@ export default function Home() {
   return (
     <div className="flex flex-col bg-background text-foreground">
        <LoginBanner />
-      <section className="py-20 md:py-32">
-        <div className="container mx-auto text-center">
-          <h1 className="font-headline text-5xl md:text-7xl font-bold tracking-tighter mb-6">
-            El Futuro del Talento Comienza Aquí
-          </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-10">
-            Conectamos a estudiantes excepcionales con empresas visionarias. Descubre oportunidades, impulsa tu carrera y encuentra a los líderes del mañana.
-          </p>
-          <div className="flex justify-center gap-4">
-            <Button size="lg" asChild>
-              <Link href="/register">Comenzar Ahora</Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/#featured-internships">Ver Pasantías</Link>
-            </Button>
-          </div>
+       <section className="relative py-20 md:py-32 overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+            <div className="absolute inset-0 bg-background"></div>
+            <div className="absolute inset-0 bg-hero-glow opacity-30"></div>
         </div>
-      </section>
+        <div className="container mx-auto text-center animate-fade-in-up">
+            <h1 className="font-headline text-5xl md:text-7xl font-bold tracking-tighter mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary via-cyan-400 to-emerald-400 animate-gradient-x">
+                El Futuro del Talento Comienza Aquí
+            </h1>
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-10 [animation-delay:200ms]">
+                Conectamos a estudiantes excepcionales con empresas visionarias. Descubre oportunidades, impulsa tu carrera y encuentra a los líderes del mañana.
+            </p>
+            <div className="flex justify-center gap-4 [animation-delay:400ms]">
+                <Button size="lg" asChild className="hover:shadow-primary/50 hover:shadow-lg transition-shadow">
+                    <Link href="/register">Comenzar Ahora</Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild className="hover:shadow-primary/50 hover:shadow-lg transition-shadow">
+                    <Link href="/#featured-internships">Ver Pasantías</Link>
+                </Button>
+            </div>
+        </div>
+    </section>
 
       <section id="featured-internships" className="py-20 md:py-24">
         <div className="container mx-auto">

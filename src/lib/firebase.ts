@@ -3,14 +3,14 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
-// Your web app's Firebase configuration - Reads from environment variables for security
+// Your web app's Firebase configuration - DO NOT EDIT
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  "projectId": "yopracticando-36seb",
+  "appId": "1:634933837473:web:0b76c4502219798642bae0",
+  "storageBucket": "yopracticando-36seb.firebasestorage.app",
+  "apiKey": "AIzaSyAGPUVrINy_j1g-_Um1xZ21GODtfe9NtkY",
+  "authDomain": "yopracticando-36seb.firebaseapp.com",
+  "messagingSenderId": "634933837473"
 };
 
 // Initialize Firebase for SSR safely

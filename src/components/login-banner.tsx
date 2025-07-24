@@ -8,36 +8,22 @@ import { LogIn } from 'lucide-react';
 
 export function LoginBanner() {
   const [isLoggedIn, setIsLoggedIn] = useState(true); // Default to true to avoid flash of content
-  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     // Check login status on the client side
-    const userId = localStorage.getItem('userId');
-    setIsLoggedIn(!!userId);
-    // Show banner immediately if not logged in
-    if (!userId) {
-        setIsVisible(true);
-    }
-
-    let lastScrollY = window.scrollY;
-
-    const controlBanner = () => {
-      if (typeof window !== 'undefined') {
-        // Hide on scroll down, show on scroll up
-        if (window.scrollY > lastScrollY && window.scrollY > 100) { // If scrolling down
-            if (isVisible) setIsVisible(false);
-        } else { // If scrolling up
-            if (!isVisible && !isLoggedIn) setIsVisible(true);
-        }
-        lastScrollY = window.scrollY;
-      }
+    const handleStorageChange = () => {
+        const userId = localStorage.getItem('userId');
+        setIsLoggedIn(!!userId);
     };
+    
+    handleStorageChange(); // Check on initial mount
 
-    window.addEventListener('scroll', controlBanner);
+    window.addEventListener('storage', handleStorageChange);
+    
     return () => {
-      window.removeEventListener('scroll', controlBanner);
+      window.removeEventListener('storage', handleStorageChange);
     };
-  }, [isVisible, isLoggedIn]);
+  }, []);
 
   // Don't render the banner if the user is logged in
   if (isLoggedIn) {
@@ -47,8 +33,7 @@ export function LoginBanner() {
   return (
     <div
       className={cn(
-        'sticky top-16 z-40 w-full bg-accent text-accent-foreground p-3 transition-transform duration-300 ease-in-out',
-        isVisible ? 'translate-y-0' : '-translate-y-full'
+        'sticky top-16 z-40 w-full bg-accent text-accent-foreground p-3 transition-opacity duration-300 ease-in-out'
       )}
     >
       <div className="container mx-auto flex items-center justify-between">

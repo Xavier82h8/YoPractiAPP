@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from "react";
@@ -36,7 +35,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const handleSuccessfulLogin = (userData: any, source: 'local' | 'google' = 'local') => {
+  const handleSuccessfulLogin = (userData: any) => {
     localStorage.setItem('userId', String(userData.id));
     localStorage.setItem('userEmail', userData.email || '');
     localStorage.setItem('userFullName', userData.fullName || 'Usuario');
@@ -80,7 +79,7 @@ export default function LoginPage() {
       const apiResult = await response.json();
 
       if (apiResult.success && apiResult.usuario) {
-        handleSuccessfulLogin({ ...apiResult.usuario, email: googleUser.email, userType: apiResult.usuario.tipo_usuario }, 'google');
+        handleSuccessfulLogin({ ...apiResult.usuario, email: googleUser.email });
       } else {
         throw new Error(apiResult.message || 'La API de Google devolvió un error.');
       }
@@ -89,10 +88,12 @@ export default function LoginPage() {
         let description = 'No se pudo iniciar el proceso de sesión con Google.';
         if (error.code === 'auth/popup-closed-by-user') {
           description = 'El proceso de inicio de sesión con Google fue cancelado.';
+        } else if (error.message) {
+          description = error.message;
         }
         toast({
           variant: 'destructive',
-          title: 'Error de Google',
+          title: 'Error de Autenticación',
           description: description,
         });
     } finally {
@@ -124,7 +125,7 @@ export default function LoginPage() {
           ...result.usuario,
           email: values.email.trim(),
           fullName: result.usuario.nombre_usuario || result.usuario.nombre_empresa || 'Usuario'
-        }, 'local');
+        });
       } else {
         toast({
           variant: "destructive",

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from "react";
@@ -92,7 +91,7 @@ export default function RegisterPage() {
 
       const apiResult = await response.json();
       if (apiResult.success && apiResult.usuario) {
-        handleSuccessfulGoogleLogin({ ...apiResult.usuario, email: googleUser.email, userType: apiResult.usuario.tipo_usuario });
+        handleSuccessfulGoogleLogin({ ...apiResult.usuario, email: googleUser.email });
       } else {
         throw new Error(apiResult.message || 'La API de Google devolvió un error.');
       }
@@ -101,10 +100,12 @@ export default function RegisterPage() {
       let description = 'No se pudo iniciar el proceso de registro con Google.';
       if (error.code === 'auth/popup-closed-by-user') {
           description = 'El proceso de registro con Google fue cancelado.';
+      } else if (error.message) {
+          description = error.message;
       }
       toast({
         variant: 'destructive',
-        title: 'Error de Google',
+        title: 'Error de Autenticación',
         description: description,
       });
     } finally {

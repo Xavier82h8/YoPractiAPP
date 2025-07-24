@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -48,13 +48,46 @@ export default function LoginPage() {
     provider.addScope('email');
 
     try {
-      await signInWithRedirect(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      const payload = {
+        email: user.email,
+        fullName: user.displayName,
+        googleId: user.uid
+      };
+
+      const response = await fetch('https://yopracticando.com/api/google-auth.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const apiResult = await response.json();
+
+      if (apiResult.success && apiResult.usuario) {
+        localStorage.setItem('userId', String(apiResult.usuario.id));
+        localStorage.setItem('userEmail', apiResult.usuario.email || '');
+        localStorage.setItem('userFullName', apiResult.usuario.fullName || 'Usuario');
+        localStorage.setItem('userType', apiResult.usuario.tipo_usuario);
+        if (apiResult.usuario.token) {
+            localStorage.setItem('userToken', apiResult.usuario.token);
+        }
+
+        window.dispatchEvent(new Event("storage"));
+
+        toast({ title: "¡Éxito!", description: apiResult.message });
+        router.push('/profile');
+      } else {
+        throw new Error(apiResult.message || "Error al procesar el inicio de sesión con Google.");
+      }
     } catch (error: any) {
         toast({
           variant: 'destructive',
           title: 'Error de Google',
           description: error.message || 'No se pudo iniciar el proceso de sesión con Google.',
         });
+    } finally {
         setIsLoading(false);
     }
   }

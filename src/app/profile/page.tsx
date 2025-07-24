@@ -117,7 +117,7 @@ export default function ProfilePage() {
               phone: localStorage.getItem('userPhone') || "",
               skills: localStorage.getItem('userSkills') || "",
               experience: localStorage.getItem('userExperience') || "",
-              companyName: localStorage.getItem('userCompanyName') || (localStorage.getItem('userType') === 'empresa' ? (localStorage.getItem('userFullName') || '') : ''),
+              companyName: localStorage.getItem('userType') === 'empresa' ? (localStorage.getItem('userFullName') || '') : '',
               companyDescription: localStorage.getItem('userCompanyDescription') || "",
               website: localStorage.getItem('userWebsite') || "",
               category: localStorage.getItem('userCategory') || "",

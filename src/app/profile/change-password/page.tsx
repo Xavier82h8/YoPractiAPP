@@ -2,52 +2,101 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MailCheck } from "lucide-react";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import Link from "next/link";
-import { useSearchParams } from 'next/navigation';
-import { Suspense } from "react";
+import { ArrowLeft } from "lucide-react";
 
-function VerifyAccountContent() {
-  const searchParams = useSearchParams();
-  const email = searchParams.get('email');
+const formSchema = z.object({
+  currentPassword: z.string().min(1, { message: "Current password is required." }),
+  newPassword: z.string().min(6, { message: "New password must be at least 6 characters." }),
+  confirmPassword: z.string(),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+
+export default function ChangePasswordPage() {
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: ""
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log(values);
+    // Handle password change logic
+  }
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-2xl text-center">
-        <CardHeader>
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent mb-4">
-            <MailCheck className="h-10 w-10 text-accent-foreground" />
-          </div>
-          <CardTitle className="font-headline text-3xl">Verifica tu Correo Electrónico</CardTitle>
-          <CardDescription>
-            Hemos enviado un enlace de verificación a{' '}
-            <span className="font-semibold text-foreground">{email || 'tu correo'}</span>.
-            Por favor, haz clic en el enlace para activar tu cuenta.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Una vez verificado, podrás iniciar sesión.
-          </p>
-           <Button asChild className="w-full mt-4">
-            <Link href="/login">
-              Ir a Iniciar Sesión
-            </Link>
-           </Button>
-           <p className="mt-4 text-sm text-muted-foreground">
-              ¿No recibiste el correo? Revisa tu carpeta de spam o intenta registrarte de nuevo.
-            </p>
-        </CardContent>
-      </Card>
+      <div className="w-full max-w-md">
+        <Button variant="ghost" asChild className="mb-4">
+          <Link href="/profile">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Profile
+          </Link>
+        </Button>
+        <Card className="shadow-2xl">
+          <CardHeader>
+            <CardTitle className="font-headline text-3xl">Change Password</CardTitle>
+            <CardDescription>Enter your current password and a new one.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="currentPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Current Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="••••••••" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="newPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="••••••••" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm New Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="••••••••" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full">Update Password</Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
-}
-
-
-export default function VerifyAccountPage() {
-  return (
-    <Suspense fallback={<div>Cargando...</div>}>
-      <VerifyAccountContent />
-    </Suspense>
-  )
 }

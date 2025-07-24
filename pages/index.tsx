@@ -48,10 +48,10 @@ export default function Home() {
        <LoginBanner />
       <section className="py-20 md:py-32">
         <div className="container mx-auto text-center">
-          <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tighter mb-4">
+          <h1 className="font-headline text-5xl md:text-7xl font-bold tracking-tighter mb-6">
             El Futuro del Talento Comienza Aquí
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-10">
             Conectamos a estudiantes excepcionales con empresas visionarias. Descubre oportunidades, impulsa tu carrera y encuentra a los líderes del mañana.
           </p>
           <div className="flex justify-center gap-4">

@@ -67,6 +67,7 @@ export default function Home() {
                 </Button>
             </div>
         </div>
+
     </section>
 
       <section id="featured-internships" className="py-20 md:py-24">

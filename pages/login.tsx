@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from "react";
-import { GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -40,7 +40,7 @@ export default function LoginPage() {
     localStorage.setItem('userId', String(userData.id));
     localStorage.setItem('userEmail', userData.email || '');
     localStorage.setItem('userFullName', userData.fullName || 'Usuario');
-    localStorage.setItem('userType', userData.tipo_usuario);
+    localStorage.setItem('userType', userData.tipo_usuario || userData.userType);
     if (userData.token) localStorage.setItem('userToken', userData.token);
     
     window.dispatchEvent(new Event("storage"));
@@ -64,13 +64,33 @@ export default function LoginPage() {
     provider.addScope('email');
 
     try {
-      await signInWithRedirect(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const googleUser = result.user;
+      
+      const response = await fetch('https://yopracticando.com/api/google-auth.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: googleUser.email,
+          fullName: googleUser.displayName,
+          googleId: googleUser.uid,
+        }),
+      });
+
+      const apiResult = await response.json();
+
+      if (apiResult.success && apiResult.usuario) {
+        handleSuccessfulLogin({ ...apiResult.usuario, email: googleUser.email, userType: apiResult.usuario.tipo_usuario }, 'google');
+      } else {
+        throw new Error(apiResult.message || 'La API de Google devolvió un error.');
+      }
     } catch (error: any) {
         toast({
           variant: 'destructive',
           title: 'Error de Google',
           description: error.message || 'No se pudo iniciar el proceso de sesión con Google.',
         });
+    } finally {
         setIsGoogleLoading(false);
     }
   }

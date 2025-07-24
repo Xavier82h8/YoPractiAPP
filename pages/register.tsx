@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from "react";
-import { GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -63,13 +63,39 @@ export default function RegisterPage() {
     provider.addScope('email');
 
     try {
-      await signInWithRedirect(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const googleUser = result.user;
+
+      const response = await fetch('https://yopracticando.com/api/google-auth.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: googleUser.email,
+          fullName: googleUser.displayName,
+          googleId: googleUser.uid,
+        }),
+      });
+
+      const apiResult = await response.json();
+      if (apiResult.success && apiResult.usuario) {
+        localStorage.setItem('userId', String(apiResult.usuario.id));
+        localStorage.setItem('userEmail', googleUser.email || '');
+        localStorage.setItem('userFullName', googleUser.displayName || 'Usuario');
+        localStorage.setItem('userType', apiResult.usuario.tipo_usuario);
+        window.dispatchEvent(new Event("storage"));
+        toast({ title: "¡Éxito!", description: "Registro con Google exitoso." });
+        router.push('/profile');
+        router.refresh();
+      } else {
+        throw new Error(apiResult.message || 'La API de Google devolvió un error.');
+      }
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Error de Google',
         description: error.message || 'No se pudo iniciar el proceso de registro con Google.',
       });
+    } finally {
       setIsGoogleLoading(false);
     }
   }

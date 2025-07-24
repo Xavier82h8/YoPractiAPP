@@ -58,15 +58,10 @@ export function AuthNav() {
     window.addEventListener('storage', updateUserState);
     
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-        // Sincronizar estado de Firebase con el estado local
         if (!firebaseUser && localStorage.getItem('userId')) {
-            // Firebase dice que no hay sesión, pero localmente sí. Limpiar.
              handleLogout();
         } else if (firebaseUser && !localStorage.getItem('userId')) {
-            // Hay sesión de Firebase pero no local (p.ej. refrescar página).
-            // La página de perfil se encargará de establecer los datos locales.
-            // Aquí solo nos aseguramos de no mostrar un estado incorrecto.
-            // La lógica en profile/page.tsx es la fuente de verdad.
+            // This case is handled by the profile page's redirect logic
         }
     });
 

@@ -59,8 +59,6 @@ export default function ProfilePage() {
     localStorage.setItem('userEmail', profile.email);
     localStorage.setItem('userFullName', profile.fullName);
     localStorage.setItem('userType', profile.userType);
-    
-    // Guardar también los campos adicionales para que estén disponibles al recargar
     localStorage.setItem('userPhone', profile.phone || '');
     localStorage.setItem('userSkills', profile.skills || '');
     localStorage.setItem('userExperience', profile.experience || '');
@@ -80,17 +78,14 @@ export default function ProfilePage() {
     }
     
     setUserProfile(profile);
-    setIsLoading(false); // Detener la carga solo después de establecer el perfil
   };
   
   useEffect(() => {
     const handleAuthRedirect = async () => {
-      // No establecer isLoading(true) aquí para evitar parpadeos si ya hay sesión.
       try {
         const result = await getRedirectResult(auth);
         
         if (result && result.user) {
-          setIsLoading(true); // Mostrar carga mientras se procesa la sesión de Google
           const googleUser = result.user;
           const response = await fetch('https://yopracticando.com/api/google-auth.php', {
             method: 'POST',
@@ -109,7 +104,6 @@ export default function ProfilePage() {
             throw new Error(apiResult.message || 'La API de Google devolvió un error.');
           }
         } else {
-          // No hay resultado de redirección, verificar si hay sesión local
           const localUserId = localStorage.getItem('userId');
           if (localUserId) {
               const profile: UserProfile = {
@@ -131,11 +125,9 @@ export default function ProfilePage() {
                   address: localStorage.getItem('userAddress') || "",
               };
               setUserProfile(profile);
-              setIsLoading(false); // Sesión local encontrada, detener carga
           } else {
-            // No hay sesión activa, redirigir a login
             router.push('/login');
-            // No es necesario detener la carga aquí, la redirección ocurrirá.
+            return; 
           }
         }
       } catch (error: any) {
@@ -145,15 +137,15 @@ export default function ProfilePage() {
           description: error.message || 'No se pudo completar el inicio de sesión.',
         });
         localStorage.clear();
-        setIsLoading(false); // Detener carga en caso de error
         router.push('/login');
-      } 
-      // No usar finally para setIsLoading(false) para tener control más preciso
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     handleAuthRedirect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Dependencias vacías para que se ejecute solo una vez al montar
+  }, []); 
 
 
   if (isLoading) {
@@ -166,7 +158,6 @@ export default function ProfilePage() {
   }
   
   if (!userProfile) {
-     // Esto puede mostrarse brevemente antes de la redirección si no hay sesión
      return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
         <p>No hay sesión de usuario activa. Redirigiendo a inicio de sesión...</p>

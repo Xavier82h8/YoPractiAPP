@@ -78,14 +78,14 @@ export default function LoginPage() {
 
       const apiResult = await response.json();
 
-      if (apiResult.success && apiResult.usuario) {
+      if (response.ok && apiResult.success && apiResult.usuario) {
         handleSuccessfulLogin({ ...apiResult.usuario, email: googleUser.email });
       } else {
         throw new Error(apiResult.message || 'La API de Google devolvió un error.');
       }
     } catch (error: any) {
         console.error("Error detallado de Google Auth:", error);
-        let description = 'No se pudo iniciar el proceso de sesión con Google.';
+        let description = 'Ocurrió un error inesperado.';
         if (error.code === 'auth/popup-closed-by-user') {
           description = 'El proceso de inicio de sesión con Google fue cancelado.';
         } else if (error.message) {
@@ -113,30 +113,21 @@ export default function LoginPage() {
         body,
       });
 
-      if (!response.ok) {
-        const errorResult = await response.json().catch(() => null);
-        throw new Error(errorResult?.message || `Error de red: ${response.status}`);
-      }
-
       const result = await response.json();
 
-      if (result.success && result.usuario) {
+      if (response.ok && result.success && result.usuario) {
          handleSuccessfulLogin({
           ...result.usuario,
           email: values.email.trim(),
           fullName: result.usuario.nombre_usuario || result.usuario.nombre_empresa || 'Usuario'
         });
       } else {
-        toast({
-          variant: "destructive",
-          title: "Fallo en el inicio de sesión",
-          description: result.message || "Credenciales inválidas. Por favor, intenta de nuevo.",
-        });
+        throw new Error(result.message || "Credenciales inválidas. Por favor, intenta de nuevo.");
       }
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Error de Conexión",
+        title: "Error de Inicio de Sesión",
         description: error.message || "No se pudo conectar al servidor.",
       });
     } finally {

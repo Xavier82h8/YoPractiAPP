@@ -90,14 +90,14 @@ export default function RegisterPage() {
       });
 
       const apiResult = await response.json();
-      if (apiResult.success && apiResult.usuario) {
+      if (response.ok && apiResult.success && apiResult.usuario) {
         handleSuccessfulGoogleLogin({ ...apiResult.usuario, email: googleUser.email });
       } else {
         throw new Error(apiResult.message || 'La API de Google devolvió un error.');
       }
     } catch (error: any) {
       console.error("Error detallado de Google Auth:", error);
-      let description = 'No se pudo iniciar el proceso de registro con Google.';
+      let description = 'Ocurrió un error inesperado.';
       if (error.code === 'auth/popup-closed-by-user') {
           description = 'El proceso de registro con Google fue cancelado.';
       } else if (error.message) {
@@ -130,25 +130,19 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestData),
       });
-      if (!response.ok) {
-        const errorResult = await response.json().catch(() => null);
-        throw new Error(errorResult?.message || `Error del servidor: ${response.status}`);
-      }
+
       const result = await response.json();
-      if (result.success) {
+
+      if (response.ok && result.success) {
         toast({ title: "¡Registro Exitoso!", description: "Te hemos enviado un correo para verificar tu cuenta." });
         router.push(`/verify-account?email=${encodeURIComponent(values.email)}`);
       } else {
-         toast({
-          variant: "destructive",
-          title: "Error en el Registro",
-          description: result.message || "No se pudo completar el registro. Intenta de nuevo.",
-        });
+         throw new Error(result.message || "No se pudo completar el registro. Intenta de nuevo.");
       }
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Error de Conexión",
+        title: "Error de Registro",
         description: error.message || "No se pudo conectar al servidor.",
       });
     } finally {
